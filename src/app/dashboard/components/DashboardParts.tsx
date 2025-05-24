@@ -90,7 +90,6 @@ export function NoDepartmentsMessage() {
 }
 
 export function WishlistLinkForm({
-  link,
   linkInput,
   onInputChange,
   onSubmit,
@@ -98,7 +97,6 @@ export function WishlistLinkForm({
   error,
   isUpdate,
 }: {
-  link?: string | null;
   linkInput: string;
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -111,20 +109,11 @@ export function WishlistLinkForm({
       {isUpdate ? (
         <>
           <div>Thank you for sharing your Amazon UK wishlist!</div>
-          <button 
-            data-collapse-target="collapseForm"
-            className="rounded-md bg-green-800 py-2 px-4 border border-transparent text-center text-sm text-white transition-all shadow-md hover:shadow-lg focus:bg-slate-700 focus:shadow-none active:bg-slate-700 hover:bg-slate-700 active:shadow-none disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none" type="button">
-            Update Link
-          </button>
+          <div className="break-all"><span className="font-semibold">Your link:</span> <a href={linkInput} target="_blank" rel="noopener noreferrer" className="underline text-green-800">{linkInput}</a></div>
         </>
       ) : (
         <div>Welcome! Please post your Amazon UK wishlist link below so Santa can find you 🎅</div>
       )}
-      <div
-        {...(isUpdate ? { "data-collapse-open": true } : {})}
-        data-collapse="collapseForm"
-        className="block h-0 w-full basis-full overflow-hidden transition-all duration-300 ease-in-out"
-      >
       <form onSubmit={onSubmit} className="flex flex-col gap-2 mt-2">
         <label htmlFor={isUpdate ? "wishlist-link-update" : "wishlist-link"} className="text-xs text-gray-700">
           {isUpdate ? "Update your wishlist link:" : "Amazon UK Wishlist Link:"}
@@ -145,7 +134,6 @@ export function WishlistLinkForm({
         {success && <div className="text-green-700 text-xs">{isUpdate ? "Link updated!" : "Link saved!"}</div>}
         {error && <div className="text-red-600 text-xs">{error}</div>}
       </form>
-      </div>
     </div>
   );
 }
