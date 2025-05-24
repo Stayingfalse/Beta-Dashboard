@@ -36,7 +36,7 @@ export default function LoginPage() {
         setButtonDisabled(false);
         if (data.token) setToken(data.token);
       }
-    } catch (err) {
+    } catch {
       setError("Server error. Try again later.");
     }
   }
