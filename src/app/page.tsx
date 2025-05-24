@@ -184,7 +184,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#b30000] via-[#fffbe6] to-[#006400] bg-fixed" style={{backgroundImage: 'url("/public/snow.svg")', backgroundRepeat: 'repeat'}}>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700">
       <form
         className="bg-white/90 rounded-xl shadow-lg p-8 w-full max-w-sm flex flex-col gap-6 border-4 border-[#b30000]"
         onSubmit={handleSubmit}
