@@ -58,13 +58,26 @@ export default function LoginPage() {
     });
   }
 
+  // Email validation helper
+  function isValidEmail(email: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  // Track if we know the user state (sign in or sign up)
+  const [userStateKnown, setUserStateKnown] = useState(false);
+
   async function handleEmailBlur(e: React.FocusEvent<HTMLInputElement>) {
     const value = e.target.value;
     setEmail(value);
     setError(null);
     setButtonDisabled(true);
     setShowPassword(false);
-    if (!value) return;
+    setUserStateKnown(false);
+    if (!value || !isValidEmail(value)) {
+      setButtonDisabled(true);
+      setUserStateKnown(false);
+      return;
+    }
     try {
       // Only check if user exists and if admin, do not authenticate or create session here
       const res = await apiFetch("/api/auth", {
@@ -74,9 +87,11 @@ export default function LoginPage() {
       if (!res.ok) {
         const errText = await res.text();
         setError(`Server error: ${res.status} ${errText}`);
+        setUserStateKnown(false);
         return;
       }
       const data = await res.json();
+      setUserStateKnown(true);
       if (!data.exists) {
         setButtonText("Sign Up");
         setButtonDisabled(false);
@@ -88,10 +103,10 @@ export default function LoginPage() {
         setShowPassword(false);
         setButtonText("Sign In");
         setButtonDisabled(false);
-        // Do NOT set token here, only after successful sign-in
       }
     } catch (err) {
       setError("Network or server error: " + (err instanceof Error ? err.message : String(err)));
+      setUserStateKnown(false);
     }
   }
 
@@ -174,7 +189,11 @@ export default function LoginPage() {
             className="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="you@email.com"
             onBlur={handleEmailBlur}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setButtonDisabled(true);
+              setUserStateKnown(false);
+            }}
             value={email}
           />
         </div>
@@ -200,7 +219,7 @@ export default function LoginPage() {
         <button
           type="submit"
           className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-          disabled={buttonDisabled}
+          disabled={buttonDisabled || !isValidEmail(email) || !userStateKnown}
         >
           {buttonText}
         </button>
