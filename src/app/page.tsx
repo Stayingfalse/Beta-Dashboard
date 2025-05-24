@@ -22,6 +22,11 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: value }),
       });
+      if (!res.ok) {
+        const errText = await res.text();
+        setError(`Server error: ${res.status} ${errText}`);
+        return;
+      }
       const data = await res.json();
       if (!data.exists) {
         setButtonText("Sign Up");
@@ -36,8 +41,8 @@ export default function LoginPage() {
         setButtonDisabled(false);
         if (data.token) setToken(data.token);
       }
-    } catch {
-      setError("Server error. Try again later.");
+    } catch (err) {
+      setError("Network or server error: " + (err instanceof Error ? err.message : String(err)));
     }
   }
 
@@ -52,12 +57,17 @@ export default function LoginPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
         });
+        if (!res.ok) {
+          const errText = await res.text();
+          setError(`Sign up failed: ${res.status} ${errText}`);
+          return;
+        }
         const data = await res.json();
         if (data.token) setToken(data.token);
         setButtonText("Signed In");
         setButtonDisabled(true);
-      } catch {
-        setError("Sign up failed.");
+      } catch (err) {
+        setError("Sign up failed: " + (err instanceof Error ? err.message : String(err)));
       }
     } else {
       // Sign in flow (non-admin)
@@ -143,7 +153,7 @@ export default function LoginPage() {
             Sign up
           </a>
         </p>
-        <p className="text-xs text-center text-gray-400 mt-4">v0.0.01</p>
+        <p className="text-xs text-center text-gray-400 mt-4">v0.0.02</p>
       </form>
     </div>
   );
