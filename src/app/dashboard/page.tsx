@@ -151,10 +151,18 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-bold text-center text-gray-900">Dashboard</h1>
         <p className="text-center text-gray-700">Logged in as <span className="font-mono">{user.email}</span></p>
         {domainEnabled === false ? (
-          <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 text-sm rounded">
-            The domain for your email is not recognised or enabled.<br />
-            Please check you used your work email, or contact your organisation to be set up.
-          </div>
+          <>
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 text-sm rounded">
+              The domain for your email is not recognised or enabled.<br />
+              Please check you used your work email, or contact your organisation to be set up.
+            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md shadow focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors mt-4"
+            >
+              Logout
+            </button>
+          </>
         ) : (
           <>
             {departmentLoading ? (
