@@ -16,15 +16,18 @@ if (dbUrl) {
 }
 
 // POST: Toggle domain enabled/disabled
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest) {
   if (!pool) return NextResponse.json({ error: "DB not ready" }, { status: 500 });
-  const domainId = params.id;
+  // Get id from URL
+  const url = new URL(req.url);
+  const id = url.pathname.split("/").filter(Boolean).slice(-3)[0]; // get [id] from /api/admin/domains/[id]/toggle
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
   const conn = await pool.getConnection();
   try {
     // Toggle is_enabled
     await conn.query(
       `UPDATE domains SET is_enabled = NOT is_enabled WHERE uid = ?`,
-      [domainId]
+      [id]
     );
     return NextResponse.json({ success: true });
   } catch {
