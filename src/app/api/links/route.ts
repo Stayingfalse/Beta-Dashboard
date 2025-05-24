@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+  
   const conn = await pool.getConnection();
   try {
     // Upsert link for user, now including department_id
