@@ -58,6 +58,25 @@ async function createSession(uid: string) {
   }
 }
 
+// Create a guest session (no user, or special guest user id)
+export async function GET(req: NextRequest) {
+  if (!pool) return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
+  // You can use a special guest user id, or null/empty
+  const guestUid = "guest";
+  const conn = await pool.getConnection();
+  try {
+    const expires = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
+    const token = randomUUID();
+    await conn.query(
+      "INSERT INTO sessions (uid, token, expires) VALUES (?, ?, ?)",
+      [guestUid, token, expires]
+    );
+    return NextResponse.json({ token, expires, guest: true });
+  } finally {
+    conn.release();
+  }
+}
+
 export async function POST(req: NextRequest) {
   const { email } = await req.json();
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -9,6 +9,40 @@ export default function LoginPage() {
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Session token management
+  useEffect(() => {
+    // Check for token in localStorage
+    let sessionToken = localStorage.getItem("session_token");
+    if (!sessionToken) {
+      // No token, request guest session from backend
+      fetch("/api/auth", { method: "GET" })
+        .then(async (res) => {
+          if (!res.ok) throw new Error("Failed to create guest session");
+          const data = await res.json();
+          if (data.token) {
+            localStorage.setItem("session_token", data.token);
+            setToken(data.token);
+          }
+        })
+        .catch((err) => setError("Could not create guest session: " + err.message));
+    } else {
+      setToken(sessionToken);
+    }
+  }, []);
+
+  // Helper to always send token with API calls
+  async function apiFetch(url: string, options: RequestInit = {}) {
+    const sessionToken = localStorage.getItem("session_token");
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        "Authorization": sessionToken ? `Bearer ${sessionToken}` : "",
+        "Content-Type": "application/json",
+      },
+    });
+  }
+
   async function handleEmailBlur(e: React.FocusEvent<HTMLInputElement>) {
     const value = e.target.value;
     setEmail(value);
@@ -17,9 +51,8 @@ export default function LoginPage() {
     setShowPassword(false);
     if (!value) return;
     try {
-      const res = await fetch("/api/auth", {
+      const res = await apiFetch("/api/auth", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: value }),
       });
       if (!res.ok) {
@@ -52,9 +85,8 @@ export default function LoginPage() {
     if (buttonText === "Sign Up") {
       // Sign up flow
       try {
-        const res = await fetch("/api/auth", {
+        const res = await apiFetch("/api/auth", {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
         });
         if (!res.ok) {
@@ -63,7 +95,10 @@ export default function LoginPage() {
           return;
         }
         const data = await res.json();
-        if (data.token) setToken(data.token);
+        if (data.token) {
+          setToken(data.token);
+          localStorage.setItem("session_token", data.token); // upgrade to authenticated
+        }
         setButtonText("Signed In");
         setButtonDisabled(true);
       } catch (err) {
