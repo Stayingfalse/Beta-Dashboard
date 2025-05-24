@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import mariadb from "mariadb";
 
 const dbUrl = process.env.MARIADB_URL || "";
@@ -28,7 +28,7 @@ export async function GET() {
       ORDER BY d.domain ASC
     `);
     return NextResponse.json(rows);
-  } catch (e) {
+  } catch {
     return NextResponse.json([], { status: 500 });
   } finally {
     conn.release();

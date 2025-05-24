@@ -23,7 +23,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   try {
     await conn.query(`DELETE FROM departments WHERE id = ?`, [deptId]);
     return NextResponse.json({ success: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Failed to delete department" }, { status: 500 });
   } finally {
     conn.release();

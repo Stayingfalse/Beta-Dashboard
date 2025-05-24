@@ -27,7 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       [domainId]
     );
     return NextResponse.json({ success: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Failed to toggle domain" }, { status: 500 });
   } finally {
     conn.release();

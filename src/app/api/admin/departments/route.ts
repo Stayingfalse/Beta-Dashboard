@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       ORDER BY d.name ASC
     `, [domainId]);
     return NextResponse.json(rows);
-  } catch (e) {
+  } catch {
     return NextResponse.json([], { status: 500 });
   } finally {
     conn.release();
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       ORDER BY d.name ASC
     `, [domain_id]);
     return NextResponse.json(rows);
-  } catch (e) {
+  } catch {
     return NextResponse.json([], { status: 500 });
   } finally {
     conn.release();
