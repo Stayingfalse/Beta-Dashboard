@@ -3,19 +3,23 @@ import mariadb from "mariadb";
 import { randomUUID } from "crypto";
 
 // Parse MARIADB_URL from environment
-const dbUrl = process.env.MARIADB_URL;
-if (!dbUrl) throw new Error("MARIADB_URL not set");
-const url = new URL(dbUrl);
-const pool = mariadb.createPool({
-  host: url.hostname,
-  user: url.username,
-  password: url.password,
-  port: Number(url.port) || 3306,
-  database: url.pathname.replace(/^\//, ""),
-  connectionLimit: 5,
-});
+const dbUrl = process.env.MARIADB_URL || "";
+let pool: mariadb.Pool | null = null;
+
+if (dbUrl) {
+  const url = new URL(dbUrl);
+  pool = mariadb.createPool({
+    host: url.hostname,
+    user: url.username,
+    password: url.password,
+    port: Number(url.port) || 3306,
+    database: url.pathname.replace(/^\//, ""),
+    connectionLimit: 5,
+  });
+}
 
 async function getUserByEmail(email: string) {
+  if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
     const rows = await conn.query("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
@@ -26,6 +30,7 @@ async function getUserByEmail(email: string) {
 }
 
 async function createUser(email: string) {
+  if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
     const domain = email.split('@')[1] || null;
@@ -37,6 +42,7 @@ async function createUser(email: string) {
 }
 
 async function createSession(uid: number) {
+  if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
     const expires = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
