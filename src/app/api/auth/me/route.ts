@@ -27,8 +27,9 @@ export async function GET(req: NextRequest) {
     const [user] = await conn.query("SELECT email, department_id FROM users WHERE id = ? LIMIT 1", [session.uid]);
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 401 });
     // Check domain enabled state
-    const domain = await conn.query("SELECT domain FROM domains WHERE uid = ? LIMIT 1", [user.domain_id])
-    const [domainRow] = await conn.query("SELECT is_enabled FROM domains WHERE domain = ? LIMIT 1", [domain]);
+    const [userDomain] = await conn.query("SELECT domain_id FROM users WHERE id = ? LIMIT 1", [session.uid]);
+    if (!userDomain) return NextResponse.json({ error: "User domain not found" }, { status: 401 });
+    const [domainRow] = await conn.query("SELECT is_enabled FROM domains WHERE uid = ? LIMIT 1", [userDomain.domain_id]);
     const domain_enabled = !!(domainRow && domainRow.is_enabled);
     // Get department name if set
     let department = null;
