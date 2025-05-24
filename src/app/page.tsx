@@ -66,6 +66,7 @@ export default function LoginPage() {
     setShowPassword(false);
     if (!value) return;
     try {
+      // Only check if user exists and if admin, do not authenticate or create session here
       const res = await apiFetch("/api/auth", {
         method: "POST",
         body: JSON.stringify({ email: value }),
@@ -87,7 +88,7 @@ export default function LoginPage() {
         setShowPassword(false);
         setButtonText("Sign In");
         setButtonDisabled(false);
-        if (data.token) setToken(data.token);
+        // Do NOT set token here, only after successful sign-in
       }
     } catch (err) {
       setError("Network or server error: " + (err instanceof Error ? err.message : String(err)));
@@ -113,6 +114,7 @@ export default function LoginPage() {
         if (data.token) {
           setToken(data.token);
           localStorage.setItem("session_token", data.token); // upgrade to authenticated
+          router.replace("/dashboard");
         }
         setButtonText("Signed In");
         setButtonDisabled(true);
@@ -121,12 +123,28 @@ export default function LoginPage() {
       }
     } else {
       // Sign in flow (non-admin)
-      if (token) {
+      try {
+        const res = await apiFetch("/api/auth", {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          setError(`Sign in failed: ${res.status} ${errText}`);
+          return;
+        }
+        const data = await res.json();
+        if (data.token) {
+          setToken(data.token);
+          localStorage.setItem("session_token", data.token);
+          router.replace("/dashboard");
+        } else if (data.is_admin) {
+          setError("Admin password sign-in not implemented.");
+        }
         setButtonText("Signed In");
         setButtonDisabled(true);
-      } else if (showPassword) {
-        // TODO: Implement admin password sign-in
-        setError("Admin password sign-in not implemented.");
+      } catch (err) {
+        setError("Sign in failed: " + (err instanceof Error ? err.message : String(err)));
       }
     }
   }
