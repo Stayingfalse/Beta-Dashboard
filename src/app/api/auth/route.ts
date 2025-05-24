@@ -34,14 +34,15 @@ async function createUser(email: string) {
   const conn = await pool.getConnection();
   try {
     const domain = email.split('@')[1] || null;
-    const res = await conn.query("INSERT INTO users (email, is_admin, domain) VALUES (?, false, ?)", [email, domain]);
-    return { uid: res.insertId, email, is_admin: false, domain };
+    const userId = randomUUID();
+    await conn.query("INSERT INTO users (id, email, is_admin, domain) VALUES (?, ?, false, ?)", [userId, email, domain]);
+    return { uid: userId, email, is_admin: false, domain };
   } finally {
     conn.release();
   }
 }
 
-async function createSession(uid: number) {
+async function createSession(uid: string) {
   if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ exists: true, is_admin: true });
   }
   // Not admin, sign in directly
-  const session = await createSession(user.uid);
+  const session = await createSession(user.id); // use user.id (uuid)
   return NextResponse.json({ exists: true, is_admin: false, token: session.token, expires: session.expires });
 }
 
@@ -79,6 +80,6 @@ export async function PUT(req: NextRequest) {
   const { email } = await req.json();
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
   const user = await createUser(email);
-  const session = await createSession(user.uid);
+  const session = await createSession(user.uid); // use uuid
   return NextResponse.json({ created: true, token: session.token, expires: session.expires });
 }
