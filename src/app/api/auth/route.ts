@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import mariadb from "mariadb";
+import { randomUUID } from "crypto";
 
 // Parse MARIADB_URL from environment
 const dbUrl = process.env.MARIADB_URL;
@@ -39,7 +40,7 @@ async function createSession(uid: number) {
   const conn = await pool.getConnection();
   try {
     const expires = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
-    const token = Math.random().toString(36).slice(2) + Date.now();
+    const token = randomUUID(); // Use a real UUID
     await conn.query(
       "INSERT INTO sessions (uid, token, expires) VALUES (?, ?, ?)",
       [uid, token, expires]
