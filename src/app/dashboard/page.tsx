@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<{ email: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
