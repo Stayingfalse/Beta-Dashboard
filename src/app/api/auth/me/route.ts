@@ -24,9 +24,12 @@ export async function GET(req: NextRequest) {
   try {
     const [session] = await conn.query("SELECT * FROM sessions WHERE token = ? AND expires > NOW() LIMIT 1", [token]);
     if (!session || !session.uid) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    const [user] = await conn.query("SELECT email FROM users WHERE id = ? LIMIT 1", [session.uid]);
+    const [user] = await conn.query("SELECT email, domain FROM users WHERE id = ? LIMIT 1", [session.uid]);
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 401 });
-    return NextResponse.json({ user });
+    // Check domain enabled state
+    const [domainRow] = await conn.query("SELECT is_enabled FROM domains WHERE domain = ? LIMIT 1", [user.domain]);
+    const domain_enabled = !!(domainRow && domainRow.is_enabled);
+    return NextResponse.json({ user, domain_enabled });
   } finally {
     conn.release();
   }

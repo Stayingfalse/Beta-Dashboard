@@ -29,12 +29,34 @@ async function getUserByEmail(email: string) {
   }
 }
 
+// Helper to get or create domain and check if enabled
+async function getOrCreateDomain(domain: string) {
+  if (!pool) throw new Error("MARIADB_URL not set");
+  const conn = await pool.getConnection();
+  try {
+    // Check if domain exists
+    const [row] = await conn.query("SELECT * FROM domains WHERE domain = ? LIMIT 1", [domain]);
+    if (row) {
+      return { uid: row.uid, is_enabled: !!row.is_enabled };
+    } else {
+      // Create new domain
+      const domainUid = randomUUID();
+      await conn.query("INSERT INTO domains (uid, domain, is_enabled) VALUES (?, ?, false)", [domainUid, domain]);
+      return { uid: domainUid, is_enabled: false };
+    }
+  } finally {
+    conn.release();
+  }
+}
+
 async function createUser(email: string) {
   if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
-    const domain = email.split('@')[1] || null;
+    const domain = (email.split('@')[1] || '').toLowerCase();
     const userId = randomUUID();
+    // Ensure domain exists in domains table
+    await getOrCreateDomain(domain);
     await conn.query("INSERT INTO users (id, email, is_admin, domain) VALUES (?, ?, false, ?)", [userId, email, domain]);
     return { uid: userId, email, is_admin: false, domain };
   } finally {
@@ -93,13 +115,15 @@ export async function POST(req: NextRequest) {
   const { email } = await req.json();
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
   const user = await getUserByEmail(email);
+  const domain = (email.split('@')[1] || '').toLowerCase();
+  const domainInfo = await getOrCreateDomain(domain);
   if (!user) {
     // Not found, signal sign-up
-    return NextResponse.json({ exists: false });
+    return NextResponse.json({ exists: false, domain_enabled: domainInfo.is_enabled });
   }
   if (user.is_admin) {
     // Admin, require password
-    return NextResponse.json({ exists: true, is_admin: true });
+    return NextResponse.json({ exists: true, is_admin: true, domain_enabled: domainInfo.is_enabled });
   }
   // Not admin, sign in directly
   // Get session token from header
@@ -109,7 +133,7 @@ export async function POST(req: NextRequest) {
     await linkSessionToUser(token, user.id);
   }
   const session = token ? { token, expires: null } : await createSession(user.id);
-  return NextResponse.json({ exists: true, is_admin: false, token: session.token, expires: session.expires });
+  return NextResponse.json({ exists: true, is_admin: false, token: session.token, expires: session.expires, domain_enabled: domainInfo.is_enabled });
 }
 
 export async function PUT(req: NextRequest) {
@@ -117,6 +141,8 @@ export async function PUT(req: NextRequest) {
   const { email } = await req.json();
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
   const user = await createUser(email);
+  const domain = (email.split('@')[1] || '').toLowerCase();
+  const domainInfo = await getOrCreateDomain(domain);
   // Get session token from header
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace(/^Bearer /, "");
@@ -124,5 +150,5 @@ export async function PUT(req: NextRequest) {
     await linkSessionToUser(token, user.uid);
   }
   const session = token ? { token, expires: null } : await createSession(user.uid);
-  return NextResponse.json({ created: true, token: session.token, expires: session.expires });
+  return NextResponse.json({ created: true, token: session.token, expires: session.expires, domain_enabled: domainInfo.is_enabled });
 }
