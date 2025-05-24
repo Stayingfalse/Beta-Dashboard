@@ -38,7 +38,7 @@ export default function RootLayout({
           </header>
           <main className="flex-1">{children}</main>
           <footer className="text-xs text-center text-[#b30000] bg-[#fffbe6] py-2 w-full border-t-2 border-[#b30000]">
-            v0.1.4 &mdash; Made for Senseé, Shared with the world
+            v0.1.6 &mdash; Made for Senseé, Shared with the world
           </footer>
         </div>
       </body>

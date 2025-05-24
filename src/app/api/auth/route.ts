@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import mariadb from "mariadb";
 import { randomUUID } from "crypto";
+import bcrypt from "bcrypt";
 
 // Parse MARIADB_URL from environment
 const dbUrl = process.env.MARIADB_URL || "";
@@ -27,6 +28,30 @@ async function getUserByEmail(email: string) {
   } finally {
     conn.release();
   }
+}
+
+// Set or update admin password (hash)
+async function setAdminPassword(email: string, password: string) {
+  if (!pool) throw new Error("MARIADB_URL not set");
+  const conn = await pool.getConnection();
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    await conn.query("UPDATE users SET password = ?, is_admin = true WHERE email = ?", [hash, email]);
+  } finally {
+    conn.release();
+  }
+}
+
+// Check password for admin
+async function checkAdminPassword(email: string, password: string) {
+  const user = await getUserByEmail(email);
+  if (!user) return false;
+  if (!user.password) {
+    // No password set, set this password now
+    await setAdminPassword(email, password);
+    return true;
+  }
+  return bcrypt.compare(password, user.password);
 }
 
 // Helper to get or create domain and check if enabled
@@ -112,7 +137,7 @@ async function linkSessionToUser(token: string, userId: string) {
 }
 
 export async function POST(req: NextRequest) {
-  const { email } = await req.json();
+  const { email, password } = await req.json();
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
   const user = await getUserByEmail(email);
   const domain = (email.split('@')[1] || '').toLowerCase();
@@ -123,9 +148,16 @@ export async function POST(req: NextRequest) {
   }
   if (user.is_admin) {
     // Admin, require password
-    return NextResponse.json({ exists: true, is_admin: true, domain_enabled: domainInfo.is_enabled });
+    if (!password) {
+      return NextResponse.json({ exists: true, is_admin: true, require_password: true, domain_enabled: domainInfo.is_enabled });
+    }
+    const valid = await checkAdminPassword(email, password);
+    if (!valid) {
+      return NextResponse.json({ exists: true, is_admin: true, error: "Invalid password", domain_enabled: domainInfo.is_enabled }, { status: 401 });
+    }
+    // Password valid, continue
   }
-  // Not admin, sign in directly
+  // Not admin, or admin with valid password
   // Get session token from header
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace(/^Bearer /, "");
@@ -133,7 +165,7 @@ export async function POST(req: NextRequest) {
     await linkSessionToUser(token, user.id);
   }
   const session = token ? { token, expires: null } : await createSession(user.id);
-  return NextResponse.json({ exists: true, is_admin: false, token: session.token, expires: session.expires, domain_enabled: domainInfo.is_enabled });
+  return NextResponse.json({ exists: true, is_admin: !!user.is_admin, token: session.token, expires: session.expires, domain_enabled: domainInfo.is_enabled });
 }
 
 export async function PUT(req: NextRequest) {
