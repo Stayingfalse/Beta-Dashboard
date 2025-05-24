@@ -14,7 +14,6 @@ export default function DashboardPage() {
   const [user, setUser] = useState<{ email: string; domain?: string; department?: { id: number; name: string } } | null>(null);
   const [departments, setDepartments] = useState<Array<{ id: number; name: string }>>([]);
   const [domainEnabled, setDomainEnabled] = useState<boolean | null>(null);
-  const [link, setLink] = useState<string | null>(null);
   const [linkInput, setLinkInput] = useState("");
   const [linkLoading, setLinkLoading] = useState(true);
   const [linkError, setLinkError] = useState<string | null>(null);
@@ -58,10 +57,9 @@ export default function DashboardPage() {
         if (!res.ok) throw new Error("Could not fetch link");
         const data = await res.json();
         if (data.link && data.link.url) {
-          setLink(data.link.url);
           setLinkInput(data.link.url);
         } else {
-          setLink(null);
+          setLinkInput("");
         }
         setLinkLoading(false);
       })
@@ -125,7 +123,7 @@ export default function DashboardPage() {
       body: JSON.stringify({ url }),
     });
     if (res.ok) {
-      setLink(url);
+      setLinkInput(url);
       setLinkSuccess(true);
     } else {
       setLinkError("Could not save your link. Please try again.");
@@ -185,13 +183,13 @@ export default function DashboardPage() {
               <LoadingMessage message="Loading your wishlist info..." />
             ) : (
               <WishlistLinkForm
-                link={link}
+                link={linkInput}
                 linkInput={linkInput}
                 onInputChange={e => setLinkInput(e.target.value)}
                 onSubmit={handleLinkSubmit}
                 success={linkSuccess}
                 error={linkError}
-                isUpdate={!!link}
+                isUpdate={!!linkInput}
               />
             )}
             {/* Only show this logout button if domain is enabled (true or null) */}
