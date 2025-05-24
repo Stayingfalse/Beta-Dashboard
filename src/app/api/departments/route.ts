@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     // Check department exists for user's domain
     const [user] = await conn.query("SELECT id, domain FROM users WHERE id = ? LIMIT 1", [session.uid]);
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 401 });
-    const [dept] = await conn.query("SELECT id FROM departments WHERE id = ? AND domain = ? LIMIT 1", [department_id, user.domain]);
+    const [dept] = await conn.query("SELECT id FROM departments WHERE id = ? AND domain_id = ? LIMIT 1", [department_id, user.domain_id]);
     if (!dept) return NextResponse.json({ error: "Invalid department for your domain" }, { status: 400 });
     // Update user's department
     await conn.query("UPDATE users SET department_id = ? WHERE id = ?", [department_id, user.id]);

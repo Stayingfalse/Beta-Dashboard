@@ -25,7 +25,7 @@ async function getUserFromToken(token: string) {
     );
     if (!session) return null;
     const [user] = await conn.query(
-      "SELECT id, email FROM users WHERE id = ?",
+      "SELECT id, email, department_id FROM users WHERE id = ?",
       [session.uid]
     );
     return user || null;
@@ -84,10 +84,11 @@ export async function POST(req: NextRequest) {
   }
   const conn = await pool.getConnection();
   try {
-    // Upsert link for user
+    // Upsert link for user, now including department_id
     await conn.query(
-      `INSERT INTO links (uid, url) VALUES (?, ?) ON DUPLICATE KEY UPDATE url = VALUES(url)`,
-      [user.id, url]
+      `INSERT INTO links (uid, url, department_id) VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE url = VALUES(url), department_id = VALUES(department_id)`,
+      [user.id, url, user.department_id]
     );
     return NextResponse.json({ success: true });
   } finally {

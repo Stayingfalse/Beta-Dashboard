@@ -56,8 +56,8 @@ async function createUser(email: string) {
     const domain = (email.split('@')[1] || '').toLowerCase();
     const userId = randomUUID();
     // Ensure domain exists in domains table
-    await getOrCreateDomain(domain);
-    await conn.query("INSERT INTO users (id, email, is_admin, domain) VALUES (?, ?, false, ?)", [userId, email, domain]);
+    const domainInfo = await getOrCreateDomain(domain);
+    await conn.query("INSERT INTO users (id, email, is_admin, domain_id) VALUES (?, ?, false, ?)", [userId, email, domainInfo.uid]);
     return { uid: userId, email, is_admin: false, domain };
   } finally {
     conn.release();
