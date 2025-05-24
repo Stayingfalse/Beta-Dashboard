@@ -16,12 +16,15 @@ if (dbUrl) {
 }
 
 // DELETE: Remove department by id
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest) {
   if (!pool) return NextResponse.json({ error: "DB not ready" }, { status: 500 });
-  const deptId = params.id;
+  // Get id from URL
+  const url = new URL(req.url);
+  const id = url.pathname.split("/").filter(Boolean).pop();
+  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
   const conn = await pool.getConnection();
   try {
-    await conn.query(`DELETE FROM departments WHERE id = ?`, [deptId]);
+    await conn.query(`DELETE FROM departments WHERE id = ?`, [id]);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Failed to delete department" }, { status: 500 });
