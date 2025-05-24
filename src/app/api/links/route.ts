@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import mariadb from "mariadb";
 
-const pool = mariadb.createPool({
-  host: process.env.MARIADB_HOST,
-  user: process.env.MARIADB_USER,
-  password: process.env.MARIADB_PASSWORD,
-  database: process.env.MARIADB_DATABASE,
-  connectionLimit: 5,
-});
+const dbUrl = process.env.MARIADB_URL || "";
+let pool: mariadb.Pool | null = null;
+if (dbUrl) {
+  const url = new URL(dbUrl);
+  pool = mariadb.createPool({
+    host: url.hostname,
+    user: url.username,
+    password: url.password,
+    port: Number(url.port) || 3306,
+    database: url.pathname.replace(/^\//, ""),
+    connectionLimit: 5,
+  });
+}
 
 async function getUserFromToken(token: string) {
+  if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
     const [session] = await conn.query(
@@ -28,6 +35,8 @@ async function getUserFromToken(token: string) {
 }
 
 export async function GET(req: NextRequest) {
+  if (!pool)
+    return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
   const auth = req.headers.get("authorization");
   if (!auth || !auth.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -50,6 +59,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  if (!pool)
+    return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
   const auth = req.headers.get("authorization");
   if (!auth || !auth.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
