@@ -61,17 +61,29 @@ async function createSession(uid: string) {
 // Create a guest session (no user, or special guest user id)
 export async function GET() {
   if (!pool) return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
-  // You can use a special guest user id, or null/empty
-  const guestUid = "guest";
   const conn = await pool.getConnection();
   try {
     const expires = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
     const token = randomUUID();
     await conn.query(
       "INSERT INTO sessions (uid, token, expires) VALUES (?, ?, ?)",
-      [guestUid, token, expires]
+      [null, token, expires]
     );
     return NextResponse.json({ token, expires, guest: true });
+  } finally {
+    conn.release();
+  }
+}
+
+// Update session to link to user after authentication
+async function linkSessionToUser(token: string, userId: string) {
+  if (!pool) throw new Error("MARIADB_URL not set");
+  const conn = await pool.getConnection();
+  try {
+    await conn.query(
+      "UPDATE sessions SET uid = ? WHERE token = ?",
+      [userId, token]
+    );
   } finally {
     conn.release();
   }
@@ -90,7 +102,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ exists: true, is_admin: true });
   }
   // Not admin, sign in directly
-  const session = await createSession(user.id); // use user.id (uuid)
+  // Get session token from header
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.replace(/^Bearer /, "");
+  if (token) {
+    await linkSessionToUser(token, user.id);
+  }
+  const session = token ? { token, expires: null } : await createSession(user.id);
   return NextResponse.json({ exists: true, is_admin: false, token: session.token, expires: session.expires });
 }
 
@@ -99,6 +117,12 @@ export async function PUT(req: NextRequest) {
   const { email } = await req.json();
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
   const user = await createUser(email);
-  const session = await createSession(user.uid); // use uuid
+  // Get session token from header
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.replace(/^Bearer /, "");
+  if (token) {
+    await linkSessionToUser(token, user.uid);
+  }
+  const session = token ? { token, expires: null } : await createSession(user.uid);
   return NextResponse.json({ created: true, token: session.token, expires: session.expires });
 }
