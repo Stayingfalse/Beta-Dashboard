@@ -63,6 +63,14 @@ export async function POST(req: NextRequest) {
   if (!url || typeof url !== "string") {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
   }
+  // Backend validation for Amazon UK wishlist format
+  const amazonPattern = /^https:\/\/www\.amazon\.co\.uk\/hz\/wishlist\/[A-Za-z0-9?=&#_\/-]+$/;
+  if (!amazonPattern.test(url)) {
+    return NextResponse.json(
+      { error: "Invalid Amazon UK wishlist link format." },
+      { status: 400 }
+    );
+  }
   const conn = await pool.getConnection();
   try {
     // Upsert link for user

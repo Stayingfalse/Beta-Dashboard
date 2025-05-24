@@ -77,17 +77,24 @@ export default function DashboardPage() {
     setLinkSuccess(false);
     const sessionToken = localStorage.getItem("session_token");
     if (!sessionToken) return;
-    if (!linkInput.trim()) {
+    const url = linkInput.trim();
+    // Validate Amazon UK wishlist format
+    const amazonPattern = /^https:\/\/www\.amazon\.co\.uk\/hz\/wishlist\/[A-Za-z0-9?=&#_\/-]+$/;
+    if (!url) {
       setLinkError("Please enter your Amazon UK wishlist link.");
+      return;
+    }
+    if (!amazonPattern.test(url)) {
+      setLinkError("Please enter a valid Amazon UK wishlist link (must start with https://www.amazon.co.uk/hz/wishlist/).");
       return;
     }
     const res = await fetch("/api/links", {
       method: "POST",
       headers: { "Authorization": `Bearer ${sessionToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ url: linkInput.trim() }),
+      body: JSON.stringify({ url }),
     });
     if (res.ok) {
-      setLink(linkInput.trim());
+      setLink(url);
       setLinkSuccess(true);
     } else {
       setLinkError("Could not save your link. Please try again.");
