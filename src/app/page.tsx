@@ -130,6 +130,35 @@ export default function LoginPage() {
       } catch {
         setError("Could not sign up. Please try again.");
       }
+    } else if (showPassword) {
+      // Admin sign in flow
+      const passwordInput = (document.getElementById("password") as HTMLInputElement)?.value;
+      if (!passwordInput) {
+        setError("Password required for admin sign in.");
+        return;
+      }
+      try {
+        const res = await apiFetch("/api/auth", {
+          method: "POST",
+          body: JSON.stringify({ email, password: passwordInput }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data?.error || "Admin sign in failed. Please try again.");
+          return;
+        }
+        const data = await res.json();
+        if (data.token) {
+          localStorage.setItem("session_token", data.token);
+          router.replace("/dashboard");
+        } else {
+          setError("Admin sign in failed. Please try again.");
+        }
+        setButtonText("Signed In");
+        setButtonDisabled(true);
+      } catch {
+        setError("Could not sign in. Please try again.");
+      }
     } else {
       // Sign in flow (non-admin)
       try {
@@ -145,8 +174,6 @@ export default function LoginPage() {
         if (data.token) {
           localStorage.setItem("session_token", data.token);
           router.replace("/dashboard");
-        } else if (data.is_admin) {
-          setError("Admin password sign-in not implemented.");
         }
         setButtonText("Signed In");
         setButtonDisabled(true);

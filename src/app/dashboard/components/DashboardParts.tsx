@@ -109,7 +109,6 @@ export function WishlistLinkForm({
       {isUpdate ? (
         <>
           <div>Thank you for sharing your Amazon UK wishlist!</div>
-          <div className="break-all"><span className="font-semibold">Your link:</span> <a href={linkInput} target="_blank" rel="noopener noreferrer" className="underline text-green-800">{linkInput}</a></div>
         </>
       ) : (
         <div>Welcome! Please post your Amazon UK wishlist link below so Santa can find you 🎅</div>
