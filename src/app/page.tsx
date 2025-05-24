@@ -12,7 +12,7 @@ export default function LoginPage() {
   // Session token management
   useEffect(() => {
     // Check for token in localStorage
-    let sessionToken = localStorage.getItem("session_token");
+    const sessionToken = localStorage.getItem("session_token");
     if (!sessionToken) {
       // No token, request guest session from backend
       fetch("/api/auth", { method: "GET" })

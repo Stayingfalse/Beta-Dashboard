@@ -59,7 +59,7 @@ async function createSession(uid: string) {
 }
 
 // Create a guest session (no user, or special guest user id)
-export async function GET(req: NextRequest) {
+export async function GET() {
   if (!pool) return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
   // You can use a special guest user id, or null/empty
   const guestUid = "guest";
