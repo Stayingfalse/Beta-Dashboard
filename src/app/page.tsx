@@ -153,7 +153,7 @@ export default function LoginPage() {
             Sign up
           </a>
         </p>
-        <p className="text-xs text-center text-gray-400 mt-4">v0.0.02</p>
+        <p className="text-xs text-center text-gray-400 mt-4">v0.0.03</p>
       </form>
     </div>
   );
