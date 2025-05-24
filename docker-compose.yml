@@ -5,6 +5,6 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - MONGODB_URI=${MONGODB_URI}
+      - MARIADB_URL=${MARIADB_URL}
     depends_on: []
     restart: unless-stopped
