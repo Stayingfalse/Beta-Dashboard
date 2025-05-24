@@ -26,7 +26,7 @@ export default function LoginPage() {
             setToken(data.token);
           }
         })
-        .catch((err) => setError("Could not create guest session: " + err.message));
+        .catch((err) => setError("Could not create guest session."));
     } else {
       setToken(sessionToken);
     }
@@ -85,8 +85,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email: value }),
       });
       if (!res.ok) {
-        const errText = await res.text();
-        setError(`Server error: ${res.status} ${errText}`);
+        setError("Server error. Please try again.");
         setUserStateKnown(false);
         return;
       }
@@ -105,7 +104,7 @@ export default function LoginPage() {
         setButtonDisabled(false);
       }
     } catch (err) {
-      setError("Network or server error: " + (err instanceof Error ? err.message : String(err)));
+      setError("Could not check email. Please try again.");
       setUserStateKnown(false);
     }
   }
@@ -121,8 +120,7 @@ export default function LoginPage() {
           body: JSON.stringify({ email }),
         });
         if (!res.ok) {
-          const errText = await res.text();
-          setError(`Sign up failed: ${res.status} ${errText}`);
+          setError("Sign up failed. Please try again.");
           return;
         }
         const data = await res.json();
@@ -134,7 +132,7 @@ export default function LoginPage() {
         setButtonText("Signed In");
         setButtonDisabled(true);
       } catch (err) {
-        setError("Sign up failed: " + (err instanceof Error ? err.message : String(err)));
+        setError("Could not sign up. Please try again.");
       }
     } else {
       // Sign in flow (non-admin)
@@ -144,8 +142,7 @@ export default function LoginPage() {
           body: JSON.stringify({ email }),
         });
         if (!res.ok) {
-          const errText = await res.text();
-          setError(`Sign in failed: ${res.status} ${errText}`);
+          setError("Sign in failed. Please try again.");
           return;
         }
         const data = await res.json();
@@ -159,7 +156,7 @@ export default function LoginPage() {
         setButtonText("Signed In");
         setButtonDisabled(true);
       } catch (err) {
-        setError("Sign in failed: " + (err instanceof Error ? err.message : String(err)));
+        setError("Could not sign in. Please try again.");
       }
     }
   }
@@ -226,19 +223,8 @@ export default function LoginPage() {
         {error && (
           <p className="text-xs text-center text-red-500 mt-2">{error}</p>
         )}
-        {token && (
-          <p className="text-xs text-center text-green-600 mt-2">
-            Signed in! Token: {token}
-          </p>
-        )}
         <p className="text-xs text-center text-gray-500 mt-2">
-          Don&apos;t have an account?{" "}
-          <a
-            href="#"
-            className="text-blue-600 hover:underline"
-          >
-            Sign up
-          </a>
+          Made for Senseé, Shared with the world{" "}
         </p>
       </form>
     </div>
