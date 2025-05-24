@@ -7,7 +7,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [buttonText, setButtonText] = useState("Sign In");
   const [buttonDisabled, setButtonDisabled] = useState(true);
-  const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -23,12 +22,10 @@ export default function LoginPage() {
           const data = await res.json();
           if (data.token) {
             localStorage.setItem("session_token", data.token);
-            setToken(data.token);
+            // Removed setToken
           }
         })
-        .catch((err) => setError("Could not create guest session."));
-    } else {
-      setToken(sessionToken);
+        .catch(() => setError("Could not create guest session."));
     }
   }, []);
 
@@ -103,7 +100,7 @@ export default function LoginPage() {
         setButtonText("Sign In");
         setButtonDisabled(false);
       }
-    } catch (err) {
+    } catch {
       setError("Could not check email. Please try again.");
       setUserStateKnown(false);
     }
@@ -125,13 +122,12 @@ export default function LoginPage() {
         }
         const data = await res.json();
         if (data.token) {
-          setToken(data.token);
           localStorage.setItem("session_token", data.token); // upgrade to authenticated
           router.replace("/dashboard");
         }
         setButtonText("Signed In");
         setButtonDisabled(true);
-      } catch (err) {
+      } catch {
         setError("Could not sign up. Please try again.");
       }
     } else {
@@ -147,7 +143,6 @@ export default function LoginPage() {
         }
         const data = await res.json();
         if (data.token) {
-          setToken(data.token);
           localStorage.setItem("session_token", data.token);
           router.replace("/dashboard");
         } else if (data.is_admin) {
@@ -155,7 +150,7 @@ export default function LoginPage() {
         }
         setButtonText("Signed In");
         setButtonDisabled(true);
-      } catch (err) {
+      } catch {
         setError("Could not sign in. Please try again.");
       }
     }
