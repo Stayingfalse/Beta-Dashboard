@@ -183,7 +183,6 @@ export default function DashboardPage() {
               <LoadingMessage message="Loading your wishlist info..." />
             ) : (
               <WishlistLinkForm
-                link={linkInput}
                 linkInput={linkInput}
                 onInputChange={e => setLinkInput(e.target.value)}
                 onSubmit={handleLinkSubmit}
