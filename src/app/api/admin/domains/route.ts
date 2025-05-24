@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import mariadb from "mariadb";
+import { adminDebugLog } from "../debug";
 
 const dbUrl = process.env.MARIADB_URL || "";
 let pool: mariadb.Pool | null = null;
@@ -17,9 +18,14 @@ if (dbUrl) {
 
 // GET: List all domains with user counts
 export async function GET() {
-  if (!pool) return NextResponse.json([], { status: 500 });
+  adminDebugLog('[domains] GET called');
+  if (!pool) {
+    adminDebugLog('[domains] No pool');
+    return NextResponse.json([], { status: 500 });
+  }
   const conn = await pool.getConnection();
   try {
+    adminDebugLog('[domains] Querying domains');
     const rows = await conn.query(`
       SELECT d.uid, d.domain, d.is_enabled, COUNT(u.id) as user_count
       FROM domains d
@@ -27,8 +33,10 @@ export async function GET() {
       GROUP BY d.uid, d.domain, d.is_enabled
       ORDER BY d.domain ASC
     `);
+    adminDebugLog('[domains] Query result:', rows);
     return NextResponse.json(rows);
-  } catch {
+  } catch (err) {
+    adminDebugLog('[domains] Query error', err);
     return NextResponse.json([], { status: 500 });
   } finally {
     conn.release();
