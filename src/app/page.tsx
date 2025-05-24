@@ -157,13 +157,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#b30000] via-[#fffbe6] to-[#006400] bg-fixed" style={{backgroundImage: 'url("/public/snow.svg")', backgroundRepeat: 'repeat'}}>
       <form
-        className="bg-white/90 rounded-xl shadow-lg p-8 w-full max-w-sm flex flex-col gap-6"
+        className="bg-white/90 rounded-xl shadow-lg p-8 w-full max-w-sm flex flex-col gap-6 border-4 border-[#b30000]"
         onSubmit={handleSubmit}
       >
-        <h1 className="text-2xl font-bold text-center text-gray-900">
-          Sign in to your account
+        <h1 className="text-2xl font-bold text-center text-[#b30000] flex items-center justify-center gap-2">
+          <span role="img" aria-label="Santa">🎅</span> Random Acts of Santa - 2025 <span role="img" aria-label="Tree">🎄</span>
         </h1>
         <div className="flex flex-col gap-2">
           <label
@@ -216,10 +216,10 @@ export default function LoginPage() {
           {buttonText}
         </button>
         {error && (
-          <p className="text-xs text-center text-red-500 mt-2">{error}</p>
+          <p className="text-xs text-center text-red-700 mt-2">{error}</p>
         )}
-        <p className="text-xs text-center text-gray-500 mt-2">
-          Made for Senseé, Shared with the world{" "}
+        <p className="text-xs text-center text-[#b30000] mt-2">
+          Made for Senseé, Shared with the world
         </p>
       </form>
     </div>
