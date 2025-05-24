@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -8,6 +9,7 @@ export default function LoginPage() {
   const [buttonDisabled, setButtonDisabled] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   // Session token management
   useEffect(() => {
@@ -29,6 +31,19 @@ export default function LoginPage() {
       setToken(sessionToken);
     }
   }, []);
+
+  useEffect(() => {
+    // If already authenticated, redirect to dashboard
+    const sessionToken = localStorage.getItem("session_token");
+    if (sessionToken) {
+      fetch("/api/auth/me", {
+        headers: { Authorization: `Bearer ${sessionToken}` },
+      })
+        .then(async (res) => {
+          if (res.ok) router.replace("/dashboard");
+        });
+    }
+  }, [router]);
 
   // Helper to always send token with API calls
   async function apiFetch(url: string, options: RequestInit = {}) {
