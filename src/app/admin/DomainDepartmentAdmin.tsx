@@ -106,31 +106,33 @@ export default function AdminDomainDepartment() {
       ) : error ? (
         <div className="text-red-600">{error}</div>
       ) : (
-        <table className="w-full text-sm border">
+        <table className="w-full text-sm border border-gray-300 rounded-lg overflow-hidden shadow-md">
           <thead>
-            <tr className="bg-gray-100">
-              <th className="p-2">Domain</th>
-              <th className="p-2">Enabled</th>
-              <th className="p-2">Users</th>
-              <th className="p-2">Departments</th>
+            <tr className="bg-[#b30000] text-white">
+              <th className="p-3 font-semibold">Domain</th>
+              <th className="p-3 font-semibold">Enabled</th>
+              <th className="p-3 font-semibold">Users</th>
+              <th className="p-3 font-semibold">Departments</th>
             </tr>
           </thead>
           <tbody>
-            {domains.map((domain) => (
-              <tr key={domain.uid} className="border-t">
-                <td className="p-2 font-mono">{domain.domain}</td>
-                <td className="p-2">
+            {domains.map((domain, idx) => (
+              <tr key={domain.uid} className={
+                `border-t ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-yellow-100 transition-colors`
+              }>
+                <td className="p-3 font-mono text-gray-900">{domain.domain}</td>
+                <td className="p-3">
                   <button
-                    className={domain.is_enabled ? "bg-green-600 text-white px-2 py-1 rounded" : "bg-gray-400 text-white px-2 py-1 rounded"}
+                    className={domain.is_enabled ? "bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded shadow" : "bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded shadow"}
                     onClick={() => handleToggleDomain(domain)}
                   >
                     {domain.is_enabled ? "Enabled" : "Disabled"}
                   </button>
                 </td>
-                <td className="p-2 text-center">{domain.user_count}</td>
-                <td className="p-2 text-center">
+                <td className="p-3 text-center text-gray-800">{domain.user_count}</td>
+                <td className="p-3 text-center">
                   <button
-                    className="bg-blue-600 text-white px-2 py-1 rounded"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow"
                     onClick={() => setSelectedDomain(domain)}
                   >
                     Manage
@@ -150,24 +152,26 @@ export default function AdminDomainDepartment() {
             <div className="text-red-600">{deptError}</div>
           ) : (
             <>
-              <table className="w-full text-sm border mb-4">
+              <table className="w-full text-sm border border-gray-300 rounded-lg overflow-hidden shadow-md mb-4">
                 <thead>
-                  <tr className="bg-gray-100">
-                    <th className="p-2">Department</th>
-                    <th className="p-2">Users</th>
-                    <th className="p-2">Links</th>
-                    <th className="p-2">Remove</th>
+                  <tr className="bg-[#b30000] text-white">
+                    <th className="p-3 font-semibold">Department</th>
+                    <th className="p-3 font-semibold">Users</th>
+                    <th className="p-3 font-semibold">Links</th>
+                    <th className="p-3 font-semibold">Remove</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {departments.map((dept) => (
-                    <tr key={dept.id} className="border-t">
-                      <td className="p-2">{dept.name}</td>
-                      <td className="p-2 text-center">{dept.user_count}</td>
-                      <td className="p-2 text-center">{dept.link_count}</td>
-                      <td className="p-2 text-center">
+                  {departments.map((dept, idx) => (
+                    <tr key={dept.id} className={
+                      `border-t ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-yellow-100 transition-colors`
+                    }>
+                      <td className="p-3 text-gray-900">{dept.name}</td>
+                      <td className="p-3 text-center text-gray-800">{dept.user_count}</td>
+                      <td className="p-3 text-center text-gray-800">{dept.link_count}</td>
+                      <td className="p-3 text-center">
                         <button
-                          className="bg-red-600 text-white px-2 py-1 rounded"
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded shadow"
                           onClick={() => handleRemoveDepartment(dept.id)}
                         >
                           Remove

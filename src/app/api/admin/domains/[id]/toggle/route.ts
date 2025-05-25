@@ -24,9 +24,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "DB not ready" }, { status: 500 });
   }
   // Get id from URL
-  const url = new URL(req.url);
-  const parts = url.pathname.split("/").filter(Boolean);
-  const id = parts[parts.length - 2]; // get [id] from /api/admin/domains/[id]/toggle
+  const url = new URL(req.url, 'http://localhost');
+  // Find the UID between /domains/ and /toggle
+  const match = url.pathname.match(/\/domains\/([^/]+)\/toggle/);
+  const id = match ? match[1] : null;
   adminDebugLog('[domains/[id]/toggle] Parsed id:', id);
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
   const conn = await pool.getConnection();

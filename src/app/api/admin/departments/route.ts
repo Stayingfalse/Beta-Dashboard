@@ -83,7 +83,14 @@ export async function POST(req: NextRequest) {
       ORDER BY d.name ASC
     `, [domain_id]);
     adminDebugLog('[departments] Updated list:', rows);
-    return NextResponse.json(rows);
+    // Convert BigInt fields to Number for JSON serialization
+    const safeRows = rows.map((row: any) => ({
+      ...row,
+      user_count: typeof row.user_count === 'bigint' ? Number(row.user_count) : row.user_count,
+      link_count: typeof row.link_count === 'bigint' ? Number(row.link_count) : row.link_count,
+    }));
+    adminDebugLog('[departments] Safe result:', safeRows);
+    return NextResponse.json(safeRows);
   } catch (err) {
     adminDebugLog('[departments] POST error', err);
     return NextResponse.json([], { status: 500 });
