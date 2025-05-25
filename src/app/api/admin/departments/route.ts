@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   try {
     adminDebugLog('[departments] Inserting department', { domain_id, name });
     await conn.query(
-      `INSERT INTO departments (id, name, domain_id) VALUES (NULL, ?, ?)`,
+      `INSERT INTO departments (id, name, domain_id) VALUES (UUID(), ?, ?)`,
       [name, domain_id]
     );
     adminDebugLog('[departments] Inserted, fetching updated list');

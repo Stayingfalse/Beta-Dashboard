@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import DomainDepartmentAdmin from "./DomainDepartmentAdmin";
+import AdminUserManagement from "./AdminUserManagement";
 
 export default function AdminDashboard() {
   return (
@@ -8,6 +9,7 @@ export default function AdminDashboard() {
       <div className="bg-white/90 rounded-xl shadow-lg p-8 w-full max-w-2xl flex flex-col gap-6 border-4 border-[#b30000] items-center">
         <h1 className="text-3xl font-bold text-[#b30000] mb-4">Admin Dashboard</h1>
         <DomainDepartmentAdmin />
+        <AdminUserManagement />
       </div>
     </div>
   );

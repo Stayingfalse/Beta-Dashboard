@@ -1,0 +1,152 @@
+import React, { useEffect, useState } from "react";
+
+interface UserRow {
+  id: string;
+  email: string;
+  is_admin: boolean;
+  domain: string;
+  department_id: string | null;
+  department_name: string | null;
+  link_url: string | null;
+}
+
+export default function AdminUserManagement() {
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editUser, setEditUser] = useState<UserRow | null>(null);
+  const [editEmail, setEditEmail] = useState("");
+  const [editDepartment, setEditDepartment] = useState<string | null>(null);
+  const [editIsAdmin, setEditIsAdmin] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSuccess, setEditSuccess] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch("/api/admin/users")
+      .then(async (res) => {
+        if (!res.ok) throw new Error();
+        setUsers(await res.json());
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Could not load users");
+        setLoading(false);
+      });
+  }, []);
+
+  function handleEdit(user: UserRow) {
+    setEditUser(user);
+    setEditEmail(user.email);
+    setEditDepartment(user.department_id);
+    setEditIsAdmin(user.is_admin);
+    setEditError(null);
+    setEditSuccess(false);
+  }
+
+  async function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editUser) return;
+    setEditError(null);
+    setEditSuccess(false);
+    const res = await fetch("/api/admin/users", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: editUser.id,
+        email: editEmail,
+        department_id: editDepartment,
+        is_admin: editIsAdmin,
+      }),
+    });
+    if (res.ok) {
+      setEditSuccess(true);
+      setUsers(users.map(u => u.id === editUser.id ? { ...u, email: editEmail, department_id: editDepartment, is_admin: editIsAdmin } : u));
+      setEditUser(null);
+    } else {
+      setEditError("Failed to update user");
+    }
+  }
+
+  async function handleDelete(user: UserRow) {
+    if (!window.confirm(`Delete user ${user.email}?`)) return;
+    const res = await fetch("/api/admin/users", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: user.id }),
+    });
+    if (res.ok) {
+      setUsers(users.filter(u => u.id !== user.id));
+    } else {
+      alert("Failed to delete user");
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-8 mt-8">
+      <h2 className="text-xl font-bold text-[#b30000]">User Management</h2>
+      {loading ? (
+        <div>Loading users...</div>
+      ) : error ? (
+        <div className="text-red-600">{error}</div>
+      ) : (
+        <table className="w-full text-sm border border-gray-300 rounded-lg overflow-hidden shadow-md">
+          <thead>
+            <tr className="bg-[#b30000] text-white">
+              <th className="p-3 font-semibold">Email</th>
+              <th className="p-3 font-semibold">Domain</th>
+              <th className="p-3 font-semibold">Department</th>
+              <th className="p-3 font-semibold">Link</th>
+              <th className="p-3 font-semibold">Admin</th>
+              <th className="p-3 font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user, idx) => (
+              <tr key={user.id} className={`border-t ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-yellow-100 transition-colors`}>
+                <td className="p-3 font-mono text-gray-900">{user.email}</td>
+                <td className="p-3 text-gray-900">{user.domain}</td>
+                <td className="p-3 text-gray-900">{user.department_name || <span className="italic text-gray-400">None</span>}</td>
+                <td className="p-3 text-center">
+                  {user.link_url ? (
+                    <a href={user.link_url} target="_blank" rel="noopener noreferrer" className="underline text-blue-700 hover:text-blue-900">Open</a>
+                  ) : (
+                    <span className="italic text-gray-400">No link</span>
+                  )}
+                </td>
+                <td className="p-3 text-center">{user.is_admin ? "Yes" : "No"}</td>
+                <td className="p-3 text-center flex gap-2 justify-center">
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow" onClick={() => handleEdit(user)}>Edit</button>
+                  <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded shadow" onClick={() => handleDelete(user)}>Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {editUser && (
+        <form onSubmit={handleEditSubmit} className="bg-white border rounded-lg shadow-md p-6 flex flex-col gap-4 max-w-md mx-auto">
+          <h3 className="text-lg font-semibold text-[#b30000]">Edit User</h3>
+          <label className="flex flex-col gap-1">
+            Email
+            <input type="email" className="border px-2 py-1 rounded text-gray-900" value={editEmail} onChange={e => setEditEmail(e.target.value)} required />
+          </label>
+          <label className="flex flex-col gap-1">
+            Department ID
+            <input type="text" className="border px-2 py-1 rounded text-gray-900" value={editDepartment || ""} onChange={e => setEditDepartment(e.target.value)} />
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={editIsAdmin} onChange={e => setEditIsAdmin(e.target.checked)} />
+            Admin
+          </label>
+          <div className="flex gap-2">
+            <button type="submit" className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded shadow">Save</button>
+            <button type="button" className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded shadow" onClick={() => setEditUser(null)}>Cancel</button>
+          </div>
+          {editError && <div className="text-red-600 text-sm">{editError}</div>}
+          {editSuccess && <div className="text-green-700 text-sm">User updated!</div>}
+        </form>
+      )}
+    </div>
+  );
+}
