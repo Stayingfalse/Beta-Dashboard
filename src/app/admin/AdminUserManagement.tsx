@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface UserRow {
   id: string;
@@ -11,6 +12,7 @@ interface UserRow {
 }
 
 export default function AdminUserManagement() {
+  const router = useRouter();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,18 +29,39 @@ export default function AdminUserManagement() {
   const [inlineEdit, setInlineEdit] = useState<{ id: string; field: keyof UserRow; value: string | boolean } | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    fetch("/api/admin/users")
+    // Check admin status before loading users
+    const sessionToken = localStorage.getItem("session_token");
+    if (!sessionToken) {
+      router.replace("/");
+      return;
+    }
+    fetch("/api/auth/me", {
+      headers: { Authorization: `Bearer ${sessionToken}` },
+    })
       .then(async (res) => {
         if (!res.ok) throw new Error();
-        setUsers(await res.json());
-        setLoading(false);
+        const data = await res.json();
+        if (!data.user?.is_admin) {
+          router.replace("/");
+          return;
+        }
+        // Only load users if admin
+        setLoading(true);
+        fetch("/api/admin/users")
+          .then(async (res) => {
+            if (!res.ok) throw new Error();
+            setUsers(await res.json());
+            setLoading(false);
+          })
+          .catch(() => {
+            setError("Could not load users");
+            setLoading(false);
+          });
       })
       .catch(() => {
-        setError("Could not load users");
-        setLoading(false);
+        router.replace("/");
       });
-  }, []);
+  }, [router]);
 
   // Get unique domains and departments for filters
   const domains = Array.from(new Set(users.map(u => u.domain).filter(Boolean)));

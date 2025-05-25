@@ -1,6 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import mariadb from "mariadb";
 import { adminDebugLog } from "../../../debug";
+import { requireAuth } from "../../../../auth/authHelpers";
+
+async function requireAdmin(req: NextRequest, pool: mariadb.Pool) {
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.replace(/^Bearer /, "");
+  if (!token) return null;
+  const conn = await pool.getConnection();
+  try {
+    const [session] = await conn.query(
+      "SELECT * FROM sessions WHERE token = ? AND expires > NOW() LIMIT 1",
+      [token]
+    );
+    if (!session || !session.uid) return null;
+    const [user] = await conn.query(
+      "SELECT is_admin FROM users WHERE id = ? LIMIT 1",
+      [session.uid]
+    );
+    if (!user || !user.is_admin) return null;
+    return session.uid;
+  } finally {
+    conn.release();
+  }
+}
 
 const dbUrl = process.env.MARIADB_URL || "";
 let pool: mariadb.Pool | null = null;
@@ -23,6 +46,8 @@ export async function POST(req: NextRequest) {
     adminDebugLog('[domains/[id]/toggle] No pool');
     return NextResponse.json({ error: "DB not ready" }, { status: 500 });
   }
+  const auth = await requireAuth(req, pool, { requireAdmin: true });
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   // Get id from URL
   const url = new URL(req.url, 'http://localhost');
   // Find the UID between /domains/ and /toggle
