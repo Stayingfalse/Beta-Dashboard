@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
   const conn = await pool.getConnection();
   try {
     const rows = await conn.query(`
-      SELECT u.id, u.email, u.is_admin, d.domain, dep.id as department_id, dep.name as department_name,
+      SELECT u.id, u.email, u.is_admin, u.domain_id, d.domain as domain_name, dep.id as department_id, dep.name as department_name,
         l.url as link_url
       FROM users u
       LEFT JOIN domains d ON u.domain_id = d.uid
@@ -38,7 +38,13 @@ export async function GET(req: NextRequest) {
       ORDER BY u.email ASC
     `);
     adminDebugLog('[users] Query result:', rows);
-    return NextResponse.json(rows);
+    // Convert BigInt fields if any (is_admin is TINYINT(1) which is fine)
+    const safeRows = (rows as Array<any>).map(row => ({
+      ...row,
+      is_admin: !!row.is_admin,
+      // Ensure any other BigInts are converted if they exist
+    }));
+    return NextResponse.json(safeRows);
   } catch (err) {
     adminDebugLog('[users] Query error', err);
     return NextResponse.json([], { status: 500 });
