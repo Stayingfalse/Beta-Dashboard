@@ -1,0 +1,9 @@
+{
+    "github.copilot.chat.commitMessageGeneration.instructions": [
+
+        {
+            "text": "Ensure to tag the changes as either 'feat', 'fix', or 'chore' based on the nature of the commit.",
+            "type": "Be Detailed and use lots of emojis for each point"
+    }
+    ]
+}
