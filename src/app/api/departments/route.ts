@@ -29,7 +29,9 @@ export async function GET(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 401 });
     // Get departments for the user's domain_id
     const departments = await conn.query("SELECT id, name FROM departments WHERE domain_id = ? ORDER BY name ASC", [user.domain_id]);
-    return NextResponse.json({ departments });
+    // Convert department ids to string (UUID)
+    const safeDepartments = departments.map((d: any) => ({ id: String(d.id), name: d.name }));
+    return NextResponse.json({ departments: safeDepartments });
   } finally {
     conn.release();
   }

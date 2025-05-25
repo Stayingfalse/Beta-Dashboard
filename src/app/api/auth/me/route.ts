@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     let department = null;
     if (user.department_id) {
       const [dept] = await conn.query("SELECT id, name FROM departments WHERE id = ? LIMIT 1", [user.department_id]);
-      if (dept) department = { id: dept.id, name: dept.name };
+      if (dept) department = { id: String(dept.id), name: dept.name };
     }
     return NextResponse.json({ user: { ...user, department }, domain_enabled });
   } finally {

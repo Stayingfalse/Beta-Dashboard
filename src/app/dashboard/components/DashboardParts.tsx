@@ -25,8 +25,8 @@ export function DepartmentSelect({
   label = "Select your department:",
   disabledOption = "Select department",
 }: {
-  departments: Array<{ id: number; name: string }>;
-  value: number | string;
+  departments: Array<{ id: string; name: string }>;
+  value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   error?: string | null;
   label?: string;
@@ -57,8 +57,8 @@ export function DepartmentCurrent({
   onChange,
   error,
 }: {
-  department: { id: number; name: string };
-  departments: Array<{ id: number; name: string }>;
+  department: { id: string; name: string };
+  departments: Array<{ id: string; name: string }>;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   error?: string | null;
 }) {
