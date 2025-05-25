@@ -33,8 +33,13 @@ export async function GET() {
       GROUP BY d.uid, d.domain, d.is_enabled
       ORDER BY d.domain ASC
     `);
-    adminDebugLog('[domains] Query result:', rows);
-    return NextResponse.json(rows);
+    // Convert BigInt to number for serialization
+    const safeRows = rows.map((row: any) => ({
+      ...row,
+      user_count: typeof row.user_count === 'bigint' ? Number(row.user_count) : row.user_count,
+    }));
+    adminDebugLog('[domains] Query result:', safeRows);
+    return NextResponse.json(safeRows);
   } catch (err) {
     adminDebugLog('[domains] Query error', err);
     return NextResponse.json([], { status: 500 });
