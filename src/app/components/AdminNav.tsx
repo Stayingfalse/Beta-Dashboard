@@ -29,19 +29,20 @@ export default function AdminNav() {
       });
   }, [pathname]);
   if (!checked || !isAdmin) return null;
-  return pathname.startsWith("/admin") ? (
-    <Link
-      href="/dashboard"
-      className="absolute right-4 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-semibold"
-    >
-      Dashboard
-    </Link>
-  ) : (
-    <Link
-      href="/admin"
-      className="absolute right-4 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-semibold"
-    >
-      Admin Area
-    </Link>
+  return (
+    <nav className="absolute right-4 flex gap-2">
+      <Link
+        href="/dashboard"
+        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-semibold"
+      >
+        Dashboard
+      </Link>
+      <Link
+        href="/admin"
+        className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-semibold"
+      >
+        Admin Area
+      </Link>
+    </nav>
   );
 }

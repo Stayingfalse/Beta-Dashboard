@@ -27,12 +27,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gradient-to-br from-[#b30000] via-[#fffbe6] to-[#006400] bg-fixed`}
-        style={{
-          backgroundImage:
-            'url("/public/snow.svg"), linear-gradient(135deg, #b30000 0%, #fffbe6 50%, #006400 100%)',
-          backgroundRepeat: "repeat",
-        }}
-      >
+     >
         <div className="w-full flex flex-col min-h-screen justify-between">
           <header className="w-full py-4 bg-[#b30000] text-white text-center font-bold text-lg shadow-md border-b-4 border-[#fffbe6] flex items-center justify-center relative">
             <span className="flex-1">🎅 Random Acts of Santa - 2025 🎄</span>
