@@ -34,7 +34,7 @@ export async function GET() {
       ORDER BY d.domain ASC
     `);
     // Convert BigInt to number for serialization
-    const safeRows = rows.map((row: any) => ({
+    const safeRows = rows.map((row: Record<string, unknown>) => ({
       ...row,
       user_count: typeof row.user_count === 'bigint' ? Number(row.user_count) : row.user_count,
     }));
