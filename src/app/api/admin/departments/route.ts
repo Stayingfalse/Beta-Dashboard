@@ -24,6 +24,8 @@ export async function GET(req: NextRequest) {
     adminDebugLog('[departments] No pool');
     return NextResponse.json([], { status: 500 });
   }
+  const auth = await requireAuth(req, pool, { requireAdmin: true });
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(req.url);
   const domainId = searchParams.get("domain_id");
   adminDebugLog('[departments] domainId:', domainId);
