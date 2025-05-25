@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import mariadb from "mariadb";
+import { adminDebugLog } from "../debug";
 
 const dbUrl = process.env.MARIADB_URL || "";
 let pool: mariadb.Pool | null = null;
@@ -17,12 +18,18 @@ if (dbUrl) {
 
 // GET: List departments for a domain with user/link counts
 export async function GET(req: NextRequest) {
-  if (!pool) return NextResponse.json([], { status: 500 });
+  adminDebugLog('[departments] GET called');
+  if (!pool) {
+    adminDebugLog('[departments] No pool');
+    return NextResponse.json([], { status: 500 });
+  }
   const { searchParams } = new URL(req.url);
   const domainId = searchParams.get("domain_id");
+  adminDebugLog('[departments] domainId:', domainId);
   if (!domainId) return NextResponse.json([], { status: 400 });
   const conn = await pool.getConnection();
   try {
+    adminDebugLog('[departments] Querying departments for domain', domainId);
     const rows = await conn.query(`
       SELECT d.id, d.name,
         (SELECT COUNT(*) FROM users u WHERE u.department_id = d.id) as user_count,
@@ -31,8 +38,10 @@ export async function GET(req: NextRequest) {
       WHERE d.domain_id = ?
       ORDER BY d.name ASC
     `, [domainId]);
+    adminDebugLog('[departments] Query result:', rows);
     return NextResponse.json(rows);
-  } catch {
+  } catch (err) {
+    adminDebugLog('[departments] Query error', err);
     return NextResponse.json([], { status: 500 });
   } finally {
     conn.release();
@@ -41,15 +50,22 @@ export async function GET(req: NextRequest) {
 
 // POST: Add department to domain
 export async function POST(req: NextRequest) {
-  if (!pool) return NextResponse.json([], { status: 500 });
+  adminDebugLog('[departments] POST called');
+  if (!pool) {
+    adminDebugLog('[departments] No pool');
+    return NextResponse.json([], { status: 500 });
+  }
   const { domain_id, name } = await req.json();
+  adminDebugLog('[departments] POST body:', { domain_id, name });
   if (!domain_id || !name) return NextResponse.json([], { status: 400 });
   const conn = await pool.getConnection();
   try {
+    adminDebugLog('[departments] Inserting department', { domain_id, name });
     await conn.query(
-      `INSERT INTO departments (id, name, domain_id) VALUES (UUID(), ?, ?)`,
+      `INSERT INTO departments (id, name, domain_id) VALUES (NULL, ?, ?)`,
       [name, domain_id]
     );
+    adminDebugLog('[departments] Inserted, fetching updated list');
     // Return updated list
     const rows = await conn.query(`
       SELECT d.id, d.name,
@@ -59,8 +75,10 @@ export async function POST(req: NextRequest) {
       WHERE d.domain_id = ?
       ORDER BY d.name ASC
     `, [domain_id]);
+    adminDebugLog('[departments] Updated list:', rows);
     return NextResponse.json(rows);
-  } catch {
+  } catch (err) {
+    adminDebugLog('[departments] POST error', err);
     return NextResponse.json([], { status: 500 });
   } finally {
     conn.release();
