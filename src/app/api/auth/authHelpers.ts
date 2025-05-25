@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import mariadb from "mariadb";
 
 export async function requireAuth(req: NextRequest, pool: mariadb.Pool, { requireAdmin = false } = {}): Promise<{ userId: string, isAdmin: boolean } | null> {

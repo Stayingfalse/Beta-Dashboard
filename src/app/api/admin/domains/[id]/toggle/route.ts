@@ -3,28 +3,6 @@ import mariadb from "mariadb";
 import { adminDebugLog } from "../../../debug";
 import { requireAuth } from "../../../../auth/authHelpers";
 
-async function requireAdmin(req: NextRequest, pool: mariadb.Pool) {
-  const authHeader = req.headers.get("authorization");
-  const token = authHeader?.replace(/^Bearer /, "");
-  if (!token) return null;
-  const conn = await pool.getConnection();
-  try {
-    const [session] = await conn.query(
-      "SELECT * FROM sessions WHERE token = ? AND expires > NOW() LIMIT 1",
-      [token]
-    );
-    if (!session || !session.uid) return null;
-    const [user] = await conn.query(
-      "SELECT is_admin FROM users WHERE id = ? LIMIT 1",
-      [session.uid]
-    );
-    if (!user || !user.is_admin) return null;
-    return session.uid;
-  } finally {
-    conn.release();
-  }
-}
-
 const dbUrl = process.env.MARIADB_URL || "";
 let pool: mariadb.Pool | null = null;
 if (dbUrl) {
