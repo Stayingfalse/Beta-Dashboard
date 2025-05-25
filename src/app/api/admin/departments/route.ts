@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
     `, [domainId]);
     adminDebugLog('[departments] Query result:', rows);
     // Convert BigInt fields to Number for JSON serialization
-    const safeRows = rows.map((row: { [key: string]: unknown }) => ({
+    const safeRows = (rows as Array<{ [key: string]: unknown }>).map((row) => ({
       ...row,
       user_count: typeof row.user_count === 'bigint' ? Number(row.user_count) : row.user_count,
       link_count: typeof row.link_count === 'bigint' ? Number(row.link_count) : row.link_count,
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     `, [domain_id]);
     adminDebugLog('[departments] Updated list:', rows);
     // Convert BigInt fields to Number for JSON serialization
-    const safeRows = rows.map((row: { [key: string]: unknown }) => ({
+    const safeRows = (rows as Array<{ [key: string]: unknown }>).map((row) => ({
       ...row,
       user_count: typeof row.user_count === 'bigint' ? Number(row.user_count) : row.user_count,
       link_count: typeof row.link_count === 'bigint' ? Number(row.link_count) : row.link_count,

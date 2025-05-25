@@ -184,7 +184,7 @@ export default function AdminDomainDepartment() {
               <div className="flex gap-2 items-center">
                 <input
                   type="text"
-                  className="border px-2 py-1 rounded"
+                  className="border px-2 py-1 rounded bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="New department name"
                   value={newDeptName}
                   onChange={e => setNewDeptName(e.target.value)}
