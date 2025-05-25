@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
     // Convert BigInt fields to Number for JSON serialization
     const safeRows = (rows as Array<{ [key: string]: unknown }>).map((row) => ({
       ...row,
+      id: String(row.id),
       user_count: typeof row.user_count === 'bigint' ? Number(row.user_count) : row.user_count,
       link_count: typeof row.link_count === 'bigint' ? Number(row.link_count) : row.link_count,
     }));
@@ -86,6 +87,7 @@ export async function POST(req: NextRequest) {
     // Convert BigInt fields to Number for JSON serialization
     const safeRows = (rows as Array<{ [key: string]: unknown }>).map((row) => ({
       ...row,
+      id: String(row.id),
       user_count: typeof row.user_count === 'bigint' ? Number(row.user_count) : row.user_count,
       link_count: typeof row.link_count === 'bigint' ? Number(row.link_count) : row.link_count,
     }));
