@@ -147,6 +147,14 @@ export default function DashboardPage() {
     });
     if (res.ok) {
       setUser((u) => u ? { ...u, department: departments.find(d => d.id === e.target.value) } : u);
+      // If user has a wishlist link, update its department_id as well
+      if (linkInput) {
+        await fetch("/api/links", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${sessionToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ url: linkInput }), // backend will use new department_id from user
+        });
+      }
     } else {
       setDepartmentError("Could not update department. Please try again.");
     }

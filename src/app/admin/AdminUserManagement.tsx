@@ -23,6 +23,9 @@ export default function AdminUserManagement() {
   const [domainFilter, setDomainFilter] = useState<string>("");
   const [departmentFilter, setDepartmentFilter] = useState<string>("");
 
+  // Inline editing state
+  const [inlineEdit, setInlineEdit] = useState<{ id: string; field: keyof UserRow; value: string | boolean } | null>(null);
+
   useEffect(() => {
     setLoading(true);
     fetch("/api/admin/users")
@@ -103,6 +106,47 @@ export default function AdminUserManagement() {
     }
   }
 
+  // Inline edit handlers
+  function handleInlineEditStart(userId: string, field: keyof UserRow, value: string | boolean) {
+    setInlineEdit({ id: userId, field, value });
+  }
+  function handleInlineEditChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+    if (!inlineEdit) return;
+    setInlineEdit({ ...inlineEdit, value: e.target.value });
+  }
+  async function handleInlineEditSave() {
+    if (!inlineEdit) return;
+    const user = users.find(u => u.id === inlineEdit.id);
+    if (!user) return;
+    const updated = { ...user, [inlineEdit.field]: inlineEdit.value };
+    const res = await fetch("/api/admin/users", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: user.id,
+        email: inlineEdit.field === "email" ? inlineEdit.value : user.email,
+        department_id: inlineEdit.field === "department_id" ? inlineEdit.value : user.department_id,
+        is_admin: inlineEdit.field === "is_admin" ? inlineEdit.value : user.is_admin,
+      }),
+    });
+    if (res.ok) {
+      setUsers(users.map(u => u.id === user.id ? { ...u, ...updated } : u));
+    }
+    setInlineEdit(null);
+  }
+  function handleInlineEditCancel() {
+    setInlineEdit(null);
+  }
+
+  // Handler to filter by domain or department from click
+  function handleDomainFilterClick(domain: string) {
+    setDomainFilter(domain);
+    setDepartmentFilter("");
+  }
+  function handleDepartmentFilterClick(department: string) {
+    setDepartmentFilter(department);
+  }
+
   return (
     <div className="flex flex-col gap-8 mt-8">
       <h2 className="text-xl font-bold text-[#b30000]">User Management</h2>
@@ -133,10 +177,28 @@ export default function AdminUserManagement() {
       ) : (
         Object.entries(grouped).map(([domain, deptObj]) => (
           <div key={domain} className="mb-8">
-            <h3 className="text-lg font-semibold text-blue-800 mb-2">Domain: {domain}</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-semibold text-blue-800">Domain: {domain}</h3>
+              <button
+                className="ml-2 px-2 py-0.5 bg-gray-200 hover:bg-blue-200 rounded text-xs font-mono border border-blue-400"
+                onClick={() => handleDomainFilterClick(domain)}
+                title={`Show only users in domain: ${domain}`}
+              >
+                {Object.values(deptObj).reduce((sum, arr) => sum + arr.length, 0)} users
+              </button>
+            </div>
             {Object.entries(deptObj).map(([dept, usersInDept]) => (
               <div key={dept} className="mb-4">
-                <h4 className="text-md font-semibold text-green-800 mb-1">Department: {dept}</h4>
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="text-md font-semibold text-green-800">Department: {dept}</h4>
+                  <button
+                    className="ml-2 px-2 py-0.5 bg-gray-200 hover:bg-green-200 rounded text-xs font-mono border border-green-400"
+                    onClick={() => handleDepartmentFilterClick(dept)}
+                    title={`Show only users in department: ${dept}`}
+                  >
+                    {usersInDept.length} users
+                  </button>
+                </div>
                 <table className="w-full text-sm border border-gray-300 rounded-lg overflow-hidden shadow-md">
                   <thead>
                     <tr className="bg-[#b30000] text-white">
@@ -151,9 +213,35 @@ export default function AdminUserManagement() {
                   <tbody>
                     {usersInDept.map((user, idx) => (
                       <tr key={user.id} className={`border-t ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-yellow-100 transition-colors`}>
-                        <td className="p-3 font-mono text-gray-900">{user.email}</td>
-                        <td className="p-3 text-gray-900">{user.domain}</td>
-                        <td className="p-3 text-gray-900">{user.department_name || <span className="italic text-gray-400">None</span>}</td>
+                        <td className="p-3 font-mono text-gray-900" onDoubleClick={() => handleInlineEditStart(user.id, "email", user.email)}>
+                          {inlineEdit && inlineEdit.id === user.id && inlineEdit.field === "email" ? (
+                            <input
+                              type="email"
+                              className="border px-1 py-0.5 rounded text-gray-900 w-full"
+                              value={inlineEdit.value as string}
+                              onChange={handleInlineEditChange}
+                              onBlur={handleInlineEditSave}
+                              onKeyDown={e => { if (e.key === "Enter") handleInlineEditSave(); if (e.key === "Escape") handleInlineEditCancel(); }}
+                              autoFocus
+                            />
+                          ) : user.email}
+                        </td>
+                        <td className="p-3 text-gray-900" onDoubleClick={() => handleInlineEditStart(user.id, "domain", user.domain)}>
+                          {user.domain}
+                        </td>
+                        <td className="p-3 text-gray-900" onDoubleClick={() => handleInlineEditStart(user.id, "department_id", user.department_id || "")}> 
+                          {inlineEdit && inlineEdit.id === user.id && inlineEdit.field === "department_id" ? (
+                            <input
+                              type="text"
+                              className="border px-1 py-0.5 rounded text-gray-900 w-full"
+                              value={inlineEdit.value as string}
+                              onChange={handleInlineEditChange}
+                              onBlur={handleInlineEditSave}
+                              onKeyDown={e => { if (e.key === "Enter") handleInlineEditSave(); if (e.key === "Escape") handleInlineEditCancel(); }}
+                              autoFocus
+                            />
+                          ) : (user.department_name || <span className="italic text-gray-400">None</span>)}
+                        </td>
                         <td className="p-3 text-center">
                           {user.link_url ? (
                             <a href={user.link_url} target="_blank" rel="noopener noreferrer" className="underline text-blue-700 hover:text-blue-900">Open</a>
@@ -161,11 +249,21 @@ export default function AdminUserManagement() {
                             <span className="italic text-gray-400">No link</span>
                           )}
                         </td>
-                        <td className="p-3 text-center">
-                          {user.is_admin ? (
-                            <span title="Admin" className="text-green-600 text-lg">✔️</span>
+                        <td className="p-3 text-center" onDoubleClick={() => handleInlineEditStart(user.id, "is_admin", user.is_admin)}>
+                          {inlineEdit && inlineEdit.id === user.id && inlineEdit.field === "is_admin" ? (
+                            <select
+                              className="border px-1 py-0.5 rounded text-gray-900"
+                              value={inlineEdit.value ? "true" : "false"}
+                              onChange={e => setInlineEdit({ ...inlineEdit, value: e.target.value === "true" })}
+                              onBlur={handleInlineEditSave}
+                              onKeyDown={e => { if (e.key === "Enter") handleInlineEditSave(); if (e.key === "Escape") handleInlineEditCancel(); }}
+                              autoFocus
+                            >
+                              <option value="true">✔️</option>
+                              <option value="false">❌</option>
+                            </select>
                           ) : (
-                            <span title="Not admin" className="text-red-600 text-lg">❌</span>
+                            user.is_admin ? <span title="Admin" className="text-green-600 text-lg">✔️</span> : <span title="Not admin" className="text-red-600 text-lg">❌</span>
                           )}
                         </td>
                         <td className="p-3 text-center flex gap-2 justify-center">
