@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
   }
   // Get id from URL
   const url = new URL(req.url);
-  const id = url.pathname.split("/").filter(Boolean).slice(-3)[0]; // get [id] from /api/admin/domains/[id]/toggle
+  const parts = url.pathname.split("/").filter(Boolean);
+  const id = parts[parts.length - 2]; // get [id] from /api/admin/domains/[id]/toggle
   adminDebugLog('[domains/[id]/toggle] Parsed id:', id);
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
   const conn = await pool.getConnection();
