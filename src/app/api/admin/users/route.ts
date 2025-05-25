@@ -17,7 +17,7 @@ if (dbUrl) {
 }
 
 // GET: List all users with domain, department, and link info
-export async function GET(req: NextRequest) {
+export async function GET() {
   adminDebugLog('[users] GET called');
   if (!pool) {
     adminDebugLog('[users] No pool');
