@@ -134,10 +134,9 @@ export default function AdminUserManagement() {
     }
   }
 
-  function handleInlineEditChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+  function handleInlineEditChange(event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     if (!inlineEdit) return;
-    // For select, e.target.value is used. For checkbox, it's different (handled in is_admin).
-    setInlineEdit({ ...inlineEdit, value: e.target.value });
+    setInlineEdit({ ...inlineEdit, value: event.target.value });
   }
 
   async function handleInlineEditSave() {
@@ -207,7 +206,9 @@ export default function AdminUserManagement() {
       try {
         const errorData = await res.json();
         errorMsg = errorData.message || errorMsg;
-      } catch (e) { /* ignore parsing error, use default message */ }
+      } catch {
+        /* ignore parsing error, use default message */
+      }
       alert(errorMsg);
     }
     setInlineEdit(null);
@@ -217,15 +218,6 @@ export default function AdminUserManagement() {
   function handleInlineEditCancel() {
     setInlineEdit(null);
     setDomainDepartments([]); // Clear departments when cancelling an inline edit
-  }
-
-  // Handler to filter by domain or department from click
-  function handleDomainFilterClick(domain: string) {
-    setDomainFilter(domain);
-    setDepartmentFilter("");
-  }
-  function handleDepartmentFilterClick(department: string) {
-    setDepartmentFilter(department);
   }
 
   // Restore handleDelete function (needed for Delete button)
@@ -253,7 +245,7 @@ export default function AdminUserManagement() {
       <div className="flex gap-4 mb-4">
         <label className="flex flex-col text-xs">
           Filter by Domain
-          <select className="border rounded px-2 py-1" value={domainFilter} onChange={e => { setDomainFilter(e.target.value); setDepartmentFilter(""); }}>
+          <select className="border rounded px-2 py-1" value={domainFilter} onChange={event => { setDomainFilter(event.target.value); setDepartmentFilter(""); }}>
             <option value="">All Domains</option>
             {domains.map(domain => (
               <option key={domain} value={domain}>{domain}</option>
@@ -262,7 +254,7 @@ export default function AdminUserManagement() {
         </label>
         <label className="flex flex-col text-xs">
           Filter by Department
-          <select className="border rounded px-2 py-1" value={departmentFilter} onChange={e => setDepartmentFilter(e.target.value)}>
+          <select className="border rounded px-2 py-1" value={departmentFilter} onChange={event => setDepartmentFilter(event.target.value)}>
             <option value="">All Departments</option>
             {departments.map(dept => (
               <option key={dept} value={dept}>{dept}</option>
@@ -307,7 +299,7 @@ export default function AdminUserManagement() {
                               value={inlineEdit.value as string}
                               onChange={handleInlineEditChange}
                               onBlur={handleInlineEditSave}
-                              onKeyDown={e => { if (e.key === "Enter") handleInlineEditSave(); if (e.key === "Escape") handleInlineEditCancel(); }}
+                              onKeyDown={event => { if (event.key === "Enter") handleInlineEditSave(); if (event.key === "Escape") handleInlineEditCancel(); }}
                               autoFocus
                             />
                           ) : user.email}
@@ -322,7 +314,7 @@ export default function AdminUserManagement() {
                               value={inlineEdit.value as string} // Will be department_id or ""
                               onChange={handleInlineEditChange} // Updates inlineEdit.value
                               onBlur={handleInlineEditSave}
-                              onKeyDown={e => { if (e.key === "Enter") handleInlineEditSave(); if (e.key === "Escape") handleInlineEditCancel(); }}
+                              onKeyDown={event => { if (event.key === "Enter") handleInlineEditSave(); if (event.key === "Escape") handleInlineEditCancel(); }}
                               autoFocus
                             >
                               <option value="">No Department</option>
@@ -344,12 +336,12 @@ export default function AdminUserManagement() {
                             <select
                               className="border px-1 py-0.5 rounded text-gray-900 bg-white"
                               value={String(inlineEdit.value)} // Ensure value is string "true" or "false"
-                              onChange={e => {
+                              onChange={event => {
                                 if (!inlineEdit) return;
-                                setInlineEdit({ ...inlineEdit, value: e.target.value === "true" });
+                                setInlineEdit({ ...inlineEdit, value: event.target.value === "true" });
                               }}
                               onBlur={handleInlineEditSave}
-                              onKeyDown={e => { if (e.key === "Enter") handleInlineEditSave(); if (e.key === "Escape") handleInlineEditCancel(); }}
+                              onKeyDown={event => { if (event.key === "Enter") handleInlineEditSave(); if (event.key === "Escape") handleInlineEditCancel(); }}
                               autoFocus
                             >
                               <option value="true">✔️</option>

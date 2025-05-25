@@ -39,9 +39,9 @@ export async function GET(req: NextRequest) {
     `);
     adminDebugLog('[users] Query result:', rows);
     // Convert BigInt fields if any (is_admin is TINYINT(1) which is fine)
-    const safeRows = (rows as Array<any>).map(row => ({
+    const safeRows = (rows as Array<Record<string, unknown>>).map(row => ({
       ...row,
-      is_admin: !!row.is_admin,
+      is_admin: !!(row as Record<string, unknown>).is_admin,
       // Ensure any other BigInts are converted if they exist
     }));
     return NextResponse.json(safeRows);
