@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
     // Get departments for the user's domain_id
     const departments = await conn.query("SELECT id, name FROM departments WHERE domain_id = ? ORDER BY name ASC", [user.domain_id]);
     // Convert department ids to string (UUID)
-    const safeDepartments = departments.map((d: any) => ({ id: String(d.id), name: d.name }));
+    const safeDepartments = (departments as Array<{ [key: string]: unknown }>).map((d) => ({ id: String(d.id), name: d.name }));
     return NextResponse.json({ departments: safeDepartments });
   } finally {
     conn.release();
