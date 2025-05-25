@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import mariadb from "mariadb";
-import { adminDebugLog } from "../../debug";
+import { adminDebugLog } from "../../../debug";
 
 const dbUrl = process.env.MARIADB_URL || "";
 let pool: mariadb.Pool | null = null;
