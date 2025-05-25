@@ -28,7 +28,10 @@ export default function AdminDomainDepartment() {
   // Fetch all domains with user counts
   useEffect(() => {
     setLoading(true);
-    fetch("/api/admin/domains")
+    const sessionToken = localStorage.getItem("session_token");
+    fetch("/api/admin/domains", {
+      headers: { Authorization: `Bearer ${sessionToken}` },
+    })
       .then(async (res) => {
         if (!res.ok) throw new Error("Failed to fetch domains");
         setDomains(await res.json());
@@ -44,7 +47,10 @@ export default function AdminDomainDepartment() {
   useEffect(() => {
     if (!selectedDomain) return;
     setDeptLoading(true);
-    fetch(`/api/admin/departments?domain_id=${selectedDomain.uid}`)
+    const sessionToken = localStorage.getItem("session_token");
+    fetch(`/api/admin/departments?domain_id=${selectedDomain.uid}`, {
+      headers: { Authorization: `Bearer ${sessionToken}` },
+    })
       .then(async (res) => {
         if (!res.ok) throw new Error();
         setDepartments(await res.json());
@@ -59,7 +65,11 @@ export default function AdminDomainDepartment() {
   // Enable/disable domain
   async function handleToggleDomain(domain: Domain) {
     setError(null);
-    const res = await fetch(`/api/admin/domains/${domain.uid}/toggle`, { method: "POST" });
+    const sessionToken = localStorage.getItem("session_token");
+    const res = await fetch(`/api/admin/domains/${domain.uid}/toggle`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${sessionToken}` },
+    });
     if (res.ok) {
       setDomains(domains.map(d => d.uid === domain.uid ? { ...d, is_enabled: !d.is_enabled } : d));
     } else {
@@ -71,9 +81,13 @@ export default function AdminDomainDepartment() {
   async function handleAddDepartment() {
     if (!selectedDomain || !newDeptName.trim()) return;
     setDeptError(null);
+    const sessionToken = localStorage.getItem("session_token");
     const res = await fetch(`/api/admin/departments`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionToken}`,
+      },
       body: JSON.stringify({ domain_id: selectedDomain.uid, name: newDeptName.trim() }),
     });
     if (res.ok) {
@@ -90,7 +104,11 @@ export default function AdminDomainDepartment() {
   async function handleRemoveDepartment(deptId: number) {
     if (!selectedDomain) return;
     setDeptError(null);
-    const res = await fetch(`/api/admin/departments/${deptId}`, { method: "DELETE" });
+    const sessionToken = localStorage.getItem("session_token");
+    const res = await fetch(`/api/admin/departments/${deptId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${sessionToken}` },
+    });
     if (res.ok) {
       setDepartments(departments.filter(d => d.id !== deptId));
     } else {

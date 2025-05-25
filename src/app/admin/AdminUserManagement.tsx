@@ -47,7 +47,9 @@ export default function AdminUserManagement() {
         }
         // Only load users if admin
         setLoading(true);
-        fetch("/api/admin/users")
+        fetch("/api/admin/users", {
+          headers: { Authorization: `Bearer ${sessionToken}` },
+        })
           .then(async (res) => {
             if (!res.ok) throw new Error();
             setUsers(await res.json());
@@ -96,9 +98,13 @@ export default function AdminUserManagement() {
     if (!editUser) return;
     setEditError(null);
     setEditSuccess(false);
+    const sessionToken = localStorage.getItem("session_token");
     const res = await fetch("/api/admin/users", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionToken}`,
+      },
       body: JSON.stringify({
         id: editUser.id,
         email: editEmail,
@@ -117,9 +123,13 @@ export default function AdminUserManagement() {
 
   async function handleDelete(user: UserRow) {
     if (!window.confirm(`Delete user ${user.email}?`)) return;
+    const sessionToken = localStorage.getItem("session_token");
     const res = await fetch("/api/admin/users", {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionToken}`,
+      },
       body: JSON.stringify({ id: user.id }),
     });
     if (res.ok) {
@@ -142,9 +152,13 @@ export default function AdminUserManagement() {
     const user = users.find(u => u.id === inlineEdit.id);
     if (!user) return;
     const updated = { ...user, [inlineEdit.field]: inlineEdit.value };
+    const sessionToken = localStorage.getItem("session_token");
     const res = await fetch("/api/admin/users", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionToken}`,
+      },
       body: JSON.stringify({
         id: user.id,
         email: inlineEdit.field === "email" ? inlineEdit.value : user.email,
