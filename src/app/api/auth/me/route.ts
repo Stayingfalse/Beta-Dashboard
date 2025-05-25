@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   try {
     const [session] = await conn.query("SELECT * FROM sessions WHERE token = ? AND expires > NOW() LIMIT 1", [token]);
     if (!session || !session.uid) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    const [user] = await conn.query("SELECT email, department_id FROM users WHERE id = ? LIMIT 1", [session.uid]);
+    const [user] = await conn.query("SELECT email, department_id, is_admin FROM users WHERE id = ? LIMIT 1", [session.uid]);
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 401 });
     // Check domain enabled state
     const [userDomain] = await conn.query("SELECT domain_id FROM users WHERE id = ? LIMIT 1", [session.uid]);
