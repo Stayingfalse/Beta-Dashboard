@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMariaDbPool } from "../../admin/helperFunctions";
 import type { LinkRow } from "../types";
 
-const pool = getMariaDbPool();
-
 async function getUserFromToken(token: string) {
+  const pool = getMariaDbPool();
   if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
@@ -24,8 +23,15 @@ async function getUserFromToken(token: string) {
 }
 
 export async function GET(req: NextRequest) {
+  const pool = getMariaDbPool();
   if (!pool)
-    return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error:
+          "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables.",
+      },
+      { status: 500 }
+    );
   const auth = req.headers.get("authorization");
   if (!auth || !auth.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -61,4 +67,18 @@ export async function GET(req: NextRequest) {
   } finally {
     conn.release();
   }
+}
+
+export async function POST(_req: NextRequest) {
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json(
+      {
+        error:
+          "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables.",
+      },
+      { status: 500 }
+    );
+  }
+  // ...existing code for POST handler...
 }

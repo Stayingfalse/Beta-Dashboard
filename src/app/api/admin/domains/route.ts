@@ -1,15 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { adminDebugLog, getMariaDbPool } from "../helperFunctions";
 
-const pool = getMariaDbPool();
-
 // GET: List all domains with user counts
-export async function GET() {
-  adminDebugLog('[domains] GET called');
+export async function GET(req: NextRequest) {
+  const pool = getMariaDbPool();
   if (!pool) {
-    adminDebugLog('[domains] No pool');
-    return NextResponse.json([], { status: 500 });
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
   }
+  adminDebugLog('[domains] GET called');
   const conn = await pool.getConnection();
   try {
     adminDebugLog('[domains] Querying domains');
@@ -31,6 +29,91 @@ export async function GET() {
   } catch (err) {
     adminDebugLog('[domains] Query error', err);
     return NextResponse.json([], { status: 500 });
+  } finally {
+    conn.release();
+  }
+}
+
+// POST: Create a new domain
+export async function POST(req: NextRequest) {
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
+  adminDebugLog('[domains] POST called');
+  const conn = await pool.getConnection();
+  try {
+    const body = await req.json();
+    adminDebugLog('[domains] Creating domain with data:', body);
+    const result = await conn.query(
+      `
+      INSERT INTO domains (name, is_enabled)
+      VALUES (?, ?)
+    `,
+      [body.name, body.is_enabled]
+    );
+    adminDebugLog('[domains] Domain created, ID:', result.insertId);
+    return NextResponse.json({ id: result.insertId, ...body });
+  } catch (err) {
+    adminDebugLog('[domains] Insert error', err);
+    return NextResponse.json({ error: "Failed to create domain" }, { status: 500 });
+  } finally {
+    conn.release();
+  }
+}
+
+// PUT: Update an existing domain
+export async function PUT(_req: NextRequest) {
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
+  adminDebugLog('[domains] PUT called');
+  const conn = await pool.getConnection();
+  try {
+    const body = await _req.json();
+    adminDebugLog('[domains] Updating domain with data:', body);
+    await conn.query(
+      `
+      UPDATE domains
+      SET name = ?, is_enabled = ?
+      WHERE id = ?
+    `,
+      [body.name, body.is_enabled, body.id]
+    );
+    adminDebugLog('[domains] Domain updated, ID:', body.id);
+    return NextResponse.json({ id: body.id, ...body });
+  } catch (err) {
+    adminDebugLog('[domains] Update error', err);
+    return NextResponse.json({ error: "Failed to update domain" }, { status: 500 });
+  } finally {
+    conn.release();
+  }
+}
+
+// DELETE: Delete a domain
+export async function DELETE(req: NextRequest) {
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
+  adminDebugLog('[domains] DELETE called');
+  const conn = await pool.getConnection();
+  try {
+    const body = await req.json();
+    adminDebugLog('[domains] Deleting domain, ID:', body.id);
+    await conn.query(
+      `
+      DELETE FROM domains
+      WHERE id = ?
+    `,
+      [body.id]
+    );
+    adminDebugLog('[domains] Domain deleted, ID:', body.id);
+    return NextResponse.json({ id: body.id });
+  } catch (err) {
+    adminDebugLog('[domains] Delete error', err);
+    return NextResponse.json({ error: "Failed to delete domain" }, { status: 500 });
   } finally {
     conn.release();
   }

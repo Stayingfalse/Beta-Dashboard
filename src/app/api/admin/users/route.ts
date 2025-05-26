@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDebugLog, getMariaDbPool } from "../helperFunctions";
 import { requireAuth } from "../../auth/authHelpers";
 
-const pool = getMariaDbPool();
-
 // GET: List all users with domain, department, and link info
 export async function GET(req: NextRequest) {
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
   adminDebugLog('[users] GET called');
   const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -41,6 +43,10 @@ export async function GET(req: NextRequest) {
 // PUT: Edit user (email, department, is_admin)
 export async function PUT(req: NextRequest) {
   adminDebugLog('[users] PUT called');
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
   const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id, email, department_id, is_admin } = await req.json();
@@ -87,6 +93,10 @@ export async function DELETE(req: NextRequest) {
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: "Missing user id" }, { status: 400 });
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
   const conn = await pool.getConnection();
   try {
     // Remove all links and allocations for this user before deleting user (to avoid FK constraint errors)

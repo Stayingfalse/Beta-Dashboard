@@ -3,9 +3,9 @@ import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
 import { getMariaDbPool } from "../admin/helperFunctions";
 
-const pool = getMariaDbPool();
-
 async function getUserByEmail(email: string) {
+  const pool = getMariaDbPool();
+  if (!pool) return null;
   const conn = await pool.getConnection();
   try {
     const rows = await conn.query("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
@@ -17,6 +17,8 @@ async function getUserByEmail(email: string) {
 
 // Set or update admin password (hash)
 async function setAdminPassword(email: string, password: string) {
+  const pool = getMariaDbPool();
+  if (!pool) return;
   const conn = await pool.getConnection();
   try {
     const hash = await bcrypt.hash(password, 10);
@@ -40,6 +42,8 @@ async function checkAdminPassword(email: string, password: string) {
 
 // Helper to get or create domain and check if enabled
 async function getOrCreateDomain(domain: string) {
+  const pool = getMariaDbPool();
+  if (!pool) return { id: null, is_enabled: false };
   const conn = await pool.getConnection();
   try {
     // Check if domain exists
@@ -58,6 +62,8 @@ async function getOrCreateDomain(domain: string) {
 }
 
 async function createUser(email: string) {
+  const pool = getMariaDbPool();
+  if (!pool) return null;
   const conn = await pool.getConnection();
   try {
     const domain = (email.split('@')[1] || '').toLowerCase();
@@ -72,6 +78,8 @@ async function createUser(email: string) {
 }
 
 async function createSession(uid: string) {
+  const pool = getMariaDbPool();
+  if (!pool) return { token: null, expires: null };
   const conn = await pool.getConnection();
   try {
     const expires = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
@@ -87,7 +95,11 @@ async function createSession(uid: string) {
 }
 
 // Create a guest session (no user, or special guest user id)
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
   const conn = await pool.getConnection();
   try {
     const expires = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
@@ -104,6 +116,8 @@ export async function GET() {
 
 // Update session to link to user after authentication
 async function linkSessionToUser(token: string, userId: string) {
+  const pool = getMariaDbPool();
+  if (!pool) return;
   const conn = await pool.getConnection();
   try {
     await conn.query(
@@ -116,6 +130,10 @@ async function linkSessionToUser(token: string, userId: string) {
 }
 
 export async function POST(req: NextRequest) {
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
   const { email, password } = await req.json();
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
   const user = await getUserByEmail(email);
@@ -147,15 +165,16 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ exists: true, is_admin: !!user.is_admin, token: session.token, expires: session.expires, domain_enabled: domainInfo.is_enabled });
 }
 
-export async function PUT(req: NextRequest) {
+export async function PUT(_req: NextRequest) {
   // Sign up flow
-  const { email } = await req.json();
+  const { email } = await _req.json();
   if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
   const user = await createUser(email);
+  if (!user) return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
   const domain = (email.split('@')[1] || '').toLowerCase();
   const domainInfo = await getOrCreateDomain(domain);
   // Get session token from header
-  const authHeader = req.headers.get("authorization");
+  const authHeader = _req.headers.get("authorization");
   const token = authHeader?.replace(/^Bearer /, "");
   if (token) {
     await linkSessionToUser(token, user.uid);

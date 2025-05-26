@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDebugLog, getMariaDbPool } from "../../helperFunctions";
+import { adminDebugLog } from "../../helperFunctions";
 import { requireAuth } from "../../../auth/authHelpers";
-
-const pool = getMariaDbPool();
+import { getMariaDbPool } from "../../helperFunctions";
 
 // DELETE: Remove department by id
 export async function DELETE(req: NextRequest) {
   adminDebugLog("[departments/[id]] DELETE called");
+  const pool = getMariaDbPool();
   if (!pool) {
     adminDebugLog("[departments/[id]] No pool");
-    return NextResponse.json({ error: "DB not ready" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error:
+          "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables.",
+      },
+      { status: 500 }
+    );
   }
   const auth = await requireAuth(req, { requireAdmin: true });
-  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!auth)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   // Get id from URL
   const url = new URL(req.url);
   const id = url.pathname.split("/").filter(Boolean).pop();
@@ -25,8 +32,13 @@ export async function DELETE(req: NextRequest) {
   try {
     adminDebugLog("[departments/[id]] Deleting department", id);
     // Remove department_id from links before deleting department (to avoid FK constraint errors)
-    await conn.query(`UPDATE links SET department_id = NULL WHERE department_id = ?`, [id]);
-    const result = await conn.query(`DELETE FROM departments WHERE id = ?`, [id]);
+    await conn.query(
+      `UPDATE links SET department_id = NULL WHERE department_id = ?`,
+      [id]
+    );
+    const result = await conn.query(`DELETE FROM departments WHERE id = ?`, [
+      id,
+    ]);
     adminDebugLog("[departments/[id]] Delete success", result);
     return NextResponse.json({ success: true });
   } catch (err) {

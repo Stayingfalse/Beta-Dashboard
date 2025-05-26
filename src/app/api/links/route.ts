@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMariaDbPool } from "../admin/helperFunctions";
 import type { LinkRow, LinkIdRow } from "./types";
 
-const pool = getMariaDbPool();
+// Removed the pool initialization from here
+// const pool = getMariaDbPool();
 
 async function getUserFromToken(token: string) {
+  const pool = getMariaDbPool();
   if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
@@ -24,8 +26,10 @@ async function getUserFromToken(token: string) {
 }
 
 export async function GET(req: NextRequest) {
-  if (!pool)
-    return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
   const auth = req.headers.get("authorization");
   if (!auth || !auth.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -48,8 +52,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!pool)
-    return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
   const auth = req.headers.get("authorization");
   if (!auth || !auth.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -85,8 +91,10 @@ export async function POST(req: NextRequest) {
 
 // POST /api/links/allocate: Allocate 3 (or 1 additional) links to a user
 export async function PUT(req: NextRequest) {
-  if (!pool)
-    return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
   const auth = req.headers.get("authorization");
   if (!auth || !auth.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

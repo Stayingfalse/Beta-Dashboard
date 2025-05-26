@@ -34,8 +34,7 @@ export function getMariaDbPool() {
       connectionLimit: 5,
     });
   } else {
-    throw new Error(
-      "MARIADB_URL or all of MARIADB_HOST, MARIADB_USER, MARIADB_DATABASE must be set"
-    );
+    // Instead of throw, return null so API routes can handle gracefully
+    return null;
   }
 }

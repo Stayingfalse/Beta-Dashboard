@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDebugLog, getMariaDbPool } from "../../helperFunctions";
+import { adminDebugLog } from "../../helperFunctions";
 import { requireAuth } from "../../../auth/authHelpers";
-
-const pool = getMariaDbPool();
+import { getMariaDbPool } from "../../helperFunctions";
 
 // DELETE: Remove domain by id, only if no users exist for that domain
 export async function DELETE(req: NextRequest) {
   adminDebugLog("[domains/[id]] DELETE called");
+  const pool = getMariaDbPool();
   if (!pool) {
     adminDebugLog("[domains/[id]] No pool");
-    return NextResponse.json({ error: "DB not ready" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables.",
+      },
+      { status: 500 }
+    );
   }
   const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -42,4 +47,22 @@ export async function DELETE(req: NextRequest) {
   } finally {
     conn.release();
   }
+}
+
+// GET: Get domain by id
+export async function GET(_req: NextRequest) {
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
+  // ...existing code...
+}
+
+// POST: Update domain by id
+export async function POST(_req: NextRequest) {
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
+  }
+  // ...existing code...
 }

@@ -3,14 +3,12 @@ import { adminDebugLog } from "../../../helperFunctions";
 import { requireAuth } from "../../../../auth/authHelpers";
 import { getMariaDbPool } from "../../../helperFunctions";
 
-const pool = getMariaDbPool();
-
 // POST: Toggle domain enabled/disabled
 export async function POST(req: NextRequest) {
   adminDebugLog('[domains/[id]/toggle] POST called');
+  const pool = getMariaDbPool();
   if (!pool) {
-    adminDebugLog('[domains/[id]/toggle] No pool');
-    return NextResponse.json({ error: "DB not ready" }, { status: 500 });
+    return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
   }
   const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

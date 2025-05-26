@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDebugLog, getMariaDbPool } from "../helperFunctions";
 import { requireAuth } from "../../auth/authHelpers";
 
-const pool = getMariaDbPool();
-
 // GET: List departments for a domain with user/link counts
 export async function GET(req: NextRequest) {
   adminDebugLog('[departments] GET called');
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json(
+      { error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." },
+      { status: 500 }
+    );
+  }
   const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(req.url);
@@ -45,6 +50,13 @@ export async function GET(req: NextRequest) {
 // POST: Add department to domain
 export async function POST(req: NextRequest) {
   adminDebugLog('[departments] POST called');
+  const pool = getMariaDbPool();
+  if (!pool) {
+    return NextResponse.json(
+      { error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." },
+      { status: 500 }
+    );
+  }
   const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { domain_id, name } = await req.json();
