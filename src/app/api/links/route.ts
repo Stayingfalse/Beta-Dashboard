@@ -29,7 +29,7 @@ async function getUserFromToken(token: string) {
     adminDebugLog('[links] session lookup', { session });
     if (!session) return null;
     const [user] = await conn.query(
-      "SELECT id, email, department_id FROM users WHERE id = ?",
+      "SELECT id, email, department_id, domain_id FROM users WHERE id = ?",
       [session.uid]
     );
     adminDebugLog('[links] user lookup', { user });
@@ -81,16 +81,12 @@ export async function POST(req: NextRequest) {
   if (!url || typeof url !== "string") {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
   }
-  // Backend validation for Amazon UK wishlist format
-  const amazonPattern = /^https:\/\/www\.amazon\.co\.uk\/hz\/wishlist\/[A-Za-z0-9?=&#_\/-]+$/;
-  if (!amazonPattern.test(url)) {
-    return NextResponse.json(
-      { error: "Invalid Amazon UK wishlist link format." },
-      { status: 400 }
-    );
-  }
   if (!user.department_id || !user.domain_id) {
+    adminDebugLog('[links] POST error: missing department_id or domain_id', { user });
     return NextResponse.json({ error: "User must have department and domain set" }, { status: 400 });
+  }
+  if (!url.startsWith("https://www.amazon.co.uk/hz/wishlist/")) {
+    return NextResponse.json({ error: "Invalid Amazon UK wishlist link format." }, { status: 400 });
   }
   const conn = await pool.getConnection();
   try {
