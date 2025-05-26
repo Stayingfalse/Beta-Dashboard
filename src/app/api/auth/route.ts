@@ -165,7 +165,6 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ exists: true, is_admin: !!user.is_admin, token: session.token, expires: session.expires, domain_enabled: domainInfo.is_enabled });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function PUT(_req: NextRequest) {
   // Sign up flow
   const { email } = await _req.json();

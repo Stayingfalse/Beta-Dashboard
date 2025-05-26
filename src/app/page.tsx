@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { PageLayout, LoginForm } from "../components";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -184,71 +185,20 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700">
-      <form
-        className="bg-white/90 rounded-xl shadow-lg p-8 w-full max-w-sm flex flex-col gap-6 border-4 border-[#b30000]"
+    <PageLayout>
+      <LoginForm
+        email={email}
+        onEmailChange={setEmail}
+        onEmailBlur={handleEmailBlur}
         onSubmit={handleSubmit}
-      >
-        <h1 className="text-2xl font-bold text-center text-[#b30000] flex items-center justify-center gap-2">
-          <span role="img" aria-label="Santa">🎅</span> Random Acts of Santa - 2025 <span role="img" aria-label="Tree">🎄</span>
-        </h1>
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="email"
-            className="text-sm font-medium text-gray-700"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            className="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="you@email.com"
-            onBlur={handleEmailBlur}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setButtonDisabled(true);
-              setUserStateKnown(false);
-            }}
-            value={email}
-          />
-        </div>
-        {showPassword && (
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              className="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="••••••••"
-            />
-          </div>
-        )}
-        <button
-          type="submit"
-          className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-          disabled={buttonDisabled || !isValidEmail(email) || !userStateKnown}
-        >
-          {buttonText}
-        </button>
-        {error && (
-          <p className="text-xs text-center text-red-700 mt-2">{error}</p>
-        )}
-        <p className="text-xs text-center text-[#b30000] mt-2">
-          Made for Senseé, Shared with the world
-        </p>
-      </form>
-    </div>
+        showPassword={showPassword}
+        buttonText={buttonText}
+        buttonDisabled={buttonDisabled}
+        userStateKnown={userStateKnown}
+        error={error}
+        onButtonDisableChange={setButtonDisabled}
+        onUserStateKnownChange={setUserStateKnown}
+      />
+    </PageLayout>
   );
 }
