@@ -23,6 +23,10 @@ export default function DashboardPage() {
   const [departmentLoading, setDepartmentLoading] = useState(true);
   const [departmentError, setDepartmentError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [allocatedLinks, setAllocatedLinks] = useState<any[]>([]);
+  const [allocLoading, setAllocLoading] = useState(false);
+  const [allocError, setAllocError] = useState<string | null>(null);
+  const [allocSuccess, setAllocSuccess] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -88,6 +92,27 @@ export default function DashboardPage() {
       .catch(() => {
         setDepartmentError("Could not load departments.");
         setDepartmentLoading(false);
+      });
+  }, [user]);
+
+  // Fetch allocated links for the user
+  useEffect(() => {
+    const sessionToken = localStorage.getItem("session_token");
+    if (!sessionToken) return;
+    setAllocLoading(true);
+    fetch("/api/links/allocate", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${sessionToken}` },
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Could not fetch allocated links");
+        const data = await res.json();
+        setAllocatedLinks(data.allocated || []);
+        setAllocLoading(false);
+      })
+      .catch(() => {
+        setAllocError("Could not load your allocated links.");
+        setAllocLoading(false);
       });
   }, [user]);
 
@@ -160,6 +185,28 @@ export default function DashboardPage() {
     }
   }
 
+  // Request allocation (3 or 1 additional)
+  async function handleAllocate(additional = false) {
+    setAllocError(null);
+    setAllocSuccess(null);
+    setAllocLoading(true);
+    const sessionToken = localStorage.getItem("session_token");
+    if (!sessionToken) return;
+    const res = await fetch("/api/links", {
+      method: "PUT",
+      headers: { "Authorization": `Bearer ${sessionToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ additional }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setAllocatedLinks((prev) => additional ? [...prev, ...data.allocated] : data.allocated);
+      setAllocSuccess(additional ? "You have been allocated an additional link!" : "You have been allocated 3 links!");
+    } else {
+      setAllocError("Could not allocate links. Please try again.");
+    }
+    setAllocLoading(false);
+  }
+
   if (!user) return <LoadingMessage message="Loading..." />;
 
   return (
@@ -207,6 +254,51 @@ export default function DashboardPage() {
                 isUpdate={!!linkInput}
               />
             )}
+            {/* Allocated Links Section */}
+            <div className="mt-4">
+              <h2 className="text-lg font-semibold text-gray-800 mb-2">Your Allocated Links</h2>
+              {allocLoading ? (
+                <LoadingMessage message="Loading allocated links..." />
+              ) : (
+                <>
+                  {allocatedLinks.length === 0 ? (
+                    <div className="text-gray-600 text-sm mb-2">You have not been allocated any links yet.</div>
+                  ) : (
+                    <table className="w-full text-xs border rounded bg-white">
+                      <thead>
+                        <tr className="bg-gray-200">
+                          <th className="p-2">Link</th>
+                          <th className="p-2">Allocated</th>
+                          <th className="p-2">Purchased</th>
+                          <th className="p-2">Errors</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allocatedLinks.map((link, idx) => (
+                          <tr key={link.id} className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                            <td className="p-2 break-all"><a href={link.url} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">{link.url}</a></td>
+                            <td className="p-2 text-center">{link.times_allocated}</td>
+                            <td className="p-2 text-center">{link.times_purchased}</td>
+                            <td className="p-2 text-center">{link.error_count}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                  <div className="flex flex-col gap-2 mt-3">
+                    <button
+                      onClick={() => handleAllocate(allocatedLinks.length > 0)}
+                      className="w-full py-2 px-4 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-md shadow focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+                      disabled={allocLoading}
+                    >
+                      {allocatedLinks.length === 0 ? "Get My 3 Links" : "Request 1 More Link"}
+                    </button>
+                    {allocSuccess && <div className="text-green-700 text-xs text-center">{allocSuccess}</div>}
+                    {allocError && <div className="text-red-700 text-xs text-center">{allocError}</div>}
+                  </div>
+                </>
+              )}
+            </div>
             {/* Only show this logout button if domain is enabled (true or null) */}
             {(domainEnabled === true || domainEnabled === null) && (
               <button
