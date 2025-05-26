@@ -36,7 +36,7 @@ async function setAdminPassword(email: string, password: string) {
   const conn = await pool.getConnection();
   try {
     const hash = await bcrypt.hash(password, 10);
-    await conn.query("UPDATE users SET password = ?, is_admin = true WHERE email = ?", [hash, email]);
+    await conn.query("UPDATE users SET password_hash = ?, is_admin = true WHERE email = ?", [hash, email]);
   } finally {
     conn.release();
   }
@@ -46,12 +46,12 @@ async function setAdminPassword(email: string, password: string) {
 async function checkAdminPassword(email: string, password: string) {
   const user = await getUserByEmail(email);
   if (!user) return false;
-  if (!user.password) {
+  if (!user.password_hash) {
     // No password set, set this password now
     await setAdminPassword(email, password);
     return true;
   }
-  return bcrypt.compare(password, user.password);
+  return bcrypt.compare(password, user.password_hash);
 }
 
 // Helper to get or create domain and check if enabled
