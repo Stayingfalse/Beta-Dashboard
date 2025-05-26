@@ -31,11 +31,11 @@ export async function GET(req: NextRequest) {
     const rows = await conn.query(`
       SELECT 
         u.id, u.email, u.is_admin, 
-        d.domain AS domain, d.uid AS domain_id,
+        d.name AS domain, d.id AS domain_id,
         u.department_id, dep.name AS department_name,
         l.url AS link_url
       FROM users u
-      LEFT JOIN domains d ON u.domain_id = d.uid
+      LEFT JOIN domains d ON u.domain_id = d.id
       LEFT JOIN departments dep ON u.department_id = dep.id
       LEFT JOIN links l ON l.uid = u.id
     `);
