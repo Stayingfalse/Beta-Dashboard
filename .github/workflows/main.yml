@@ -1,3 +1,8 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+# eslint-disable
+# prettier-ignore
+# vscode-disable-next-line
+# This file is intentionally ignored by VSCode linting and formatting tools
 name: Auto Deploy
 on:
   push:
