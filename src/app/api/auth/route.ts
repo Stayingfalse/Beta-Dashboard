@@ -95,7 +95,7 @@ async function createSession(uid: string) {
 }
 
 // Create a guest session (no user, or special guest user id)
-export async function GET(req: NextRequest) {
+export async function GET() {
   const pool = getMariaDbPool();
   if (!pool) {
     return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
@@ -165,6 +165,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ exists: true, is_admin: !!user.is_admin, token: session.token, expires: session.expires, domain_enabled: domainInfo.is_enabled });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function PUT(_req: NextRequest) {
   // Sign up flow
   const { email } = await _req.json();

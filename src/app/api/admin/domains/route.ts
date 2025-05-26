@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDebugLog, getMariaDbPool } from "../helperFunctions";
 
 // GET: List all domains with user counts
-export async function GET(_req: NextRequest) {
+export async function GET() {
   const pool = getMariaDbPool();
   if (!pool) {
     return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
