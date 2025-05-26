@@ -99,7 +99,7 @@ export function closeMariaDbPool() {
 }
 
 // Function to test database connectivity
-export async function testDatabaseConnection(): Promise<{ success: boolean; error?: string; details?: any }> {
+export async function testDatabaseConnection(): Promise<{ success: boolean; error?: string; details?: unknown }> {
   try {
     const pool = getMariaDbPool();
     if (!pool) {
@@ -114,15 +114,16 @@ export async function testDatabaseConnection(): Promise<{ success: boolean; erro
     } finally {
       conn.release();
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorObj = error as Error & { code?: string; errno?: number; sqlState?: string };
     adminDebugLog("Database test failed:", error);
     return { 
       success: false, 
-      error: error.message,
+      error: errorObj.message,
       details: {
-        code: error.code,
-        errno: error.errno,
-        sqlState: error.sqlState
+        code: errorObj.code,
+        errno: errorObj.errno,
+        sqlState: errorObj.sqlState
       }
     };
   }

@@ -18,13 +18,13 @@ export async function GET() {
         DEBUG_FLAG: process.env.DEBUG_FLAG || "false"
       },
       connectionTest: testResult
-    });
-  } catch (error: any) {
+    });  } catch (error: unknown) {
+    const errorObj = error as Error;
     adminDebugLog("Debug endpoint error:", error);
     return NextResponse.json({
       timestamp: new Date().toISOString(),
-      error: error.message,
-      stack: error.stack
+      error: errorObj.message,
+      stack: errorObj.stack
     }, { status: 500 });
   }
 }
