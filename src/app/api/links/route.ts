@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMariaDbPool } from "../../admin/debug";
+import { getMariaDbPool } from "../admin/helperFunctions";
 import type { LinkRow, LinkIdRow } from "./types";
 
 const pool = getMariaDbPool();
@@ -166,7 +166,7 @@ export async function PUT(req: NextRequest) {
       error_count: Number(l.error_count)
     }));
     return NextResponse.json({ allocated: result });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Failed to allocate links" }, { status: 500 });
   } finally {
     conn.release();

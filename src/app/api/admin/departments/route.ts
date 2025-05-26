@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDebugLog, getMariaDbPool } from "../debug";
+import { adminDebugLog, getMariaDbPool } from "../helperFunctions";
 import { requireAuth } from "../../auth/authHelpers";
 
 const pool = getMariaDbPool();

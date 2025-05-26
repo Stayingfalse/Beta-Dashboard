@@ -1,7 +1,6 @@
 // Central debug flag for admin API routes
 export function adminDebugLog(...args: unknown[]) {
   if (process.env.DEBUG_FLAG === "true") {
-    // eslint-disable-next-line no-console
     console.log("[admin-api]", ...args);
   }
 }

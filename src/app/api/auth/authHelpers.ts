@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
-import mariadb from "mariadb";
-import { getMariaDbPool } from "../../admin/debug";
+import { getMariaDbPool } from "../admin/helperFunctions";
 
 const pool = getMariaDbPool();
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMariaDbPool } from "../../admin/debug";
+import { getMariaDbPool } from "../../admin/helperFunctions";
 import type { LinkRow } from "../types";
 
 const pool = getMariaDbPool();
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
       error_count: Number(l.error_count),
     }));
     return NextResponse.json({ allocated: result });
-  } catch (e) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch allocated links" },
       { status: 500 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDebugLog } from "../../../debug";
+import { adminDebugLog } from "../../../helperFunctions";
 import { requireAuth } from "../../../../auth/authHelpers";
-import { getMariaDbPool } from "../../debug";
+import { getMariaDbPool } from "../../../helperFunctions";
 
 const pool = getMariaDbPool();
 
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     adminDebugLog('[domains/[id]/toggle] No pool');
     return NextResponse.json({ error: "DB not ready" }, { status: 500 });
   }
-  const auth = await requireAuth(req, pool, { requireAdmin: true });
+  const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   // Get id from URL
   const url = new URL(req.url, 'http://localhost');
