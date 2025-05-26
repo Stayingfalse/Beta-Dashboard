@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMariaDbPool } from "../admin/helperFunctions";
+import { getMariaDbPool, adminDebugLog } from "../admin/helperFunctions";
 
 export async function GET(req: NextRequest) {
   const pool = getMariaDbPool();
@@ -45,9 +45,13 @@ export async function POST(req: NextRequest) {
     const [user] = await conn.query("SELECT id, department_id, domain_id FROM users WHERE id = ? LIMIT 1", [session.uid]);
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 401 });
     const [dept] = await conn.query("SELECT id FROM departments WHERE id = ? AND domain_id = ? LIMIT 1", [department_id, user.domain_id]);
-    if (!dept) return NextResponse.json({ error: "Invalid department for your domain" }, { status: 400 });
-    // Update user's department
+    if (!dept) return NextResponse.json({ error: "Invalid department for your domain" }, { status: 400 });    // Update user's department
     await conn.query("UPDATE users SET department_id = ? WHERE id = ?", [department_id, user.id]);
+    
+    // Update the department_id on the user's existing links to prevent duplicates
+    const linkUpdateResult = await conn.query("UPDATE links SET department_id = ? WHERE uid = ?", [department_id, user.id]);
+    adminDebugLog('[departments] Updated user department and links', { user_id: user.id, department_id, link_updates: linkUpdateResult.affectedRows });
+    
     return NextResponse.json({ success: true });
   } finally {
     conn.release();

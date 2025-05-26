@@ -71,11 +71,16 @@ export async function PUT(req: NextRequest) {
     if (email === undefined && department_id === undefined && is_admin === undefined) {
       adminDebugLog('[users] PUT: No changes, skipping update for user', id);
       return NextResponse.json({ success: true });
-    }
-    await conn.query(
+    }    await conn.query(
       `UPDATE users SET email = ?, department_id = ?, is_admin = ? WHERE id = ?`,
       [finalEmail, department_id || null, !!is_admin, id]
     );
+      // If department_id changed, update the department_id on the user's existing links to prevent duplicates
+    if (department_id !== undefined) {
+      const linkUpdateResult = await conn.query("UPDATE links SET department_id = ? WHERE uid = ?", [department_id || null, id]);
+      adminDebugLog('[users] Updated user links department', { user_id: id, department_id, link_updates: linkUpdateResult.affectedRows });
+    }
+    
     adminDebugLog('[users] Updated user', id);
     return NextResponse.json({ success: true });
   } catch (err) {
