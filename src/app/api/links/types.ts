@@ -1,12 +1,12 @@
 // Types shared by API routes
 export interface LinkRow {
-  id: number | bigint;
+  id: number;
   url: string;
-  times_allocated: number | bigint;
-  times_purchased: number | bigint;
-  error_count: number | bigint;
+  times_allocated: number;
+  times_purchased: number;
+  error_count: number;
 }
 
 export interface LinkIdRow {
-  link_id: number | bigint;
+  link_id: number;
 }

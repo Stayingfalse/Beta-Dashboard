@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from "react";
 
 interface Domain {
-  uid: string;
-  domain: string;
+  id: number;
+  name: string;
   is_enabled: boolean;
   user_count: number;
 }
@@ -48,7 +48,7 @@ export default function AdminDomainDepartment() {
     if (!selectedDomain) return;
     setDeptLoading(true);
     const sessionToken = localStorage.getItem("session_token");
-    fetch(`/api/admin/departments?domain_id=${selectedDomain.uid}`, {
+    fetch(`/api/admin/departments?domain_id=${selectedDomain.id}`, {
       headers: { Authorization: `Bearer ${sessionToken}` },
     })
       .then(async (res) => {
@@ -66,12 +66,12 @@ export default function AdminDomainDepartment() {
   async function handleToggleDomain(domain: Domain) {
     setError(null);
     const sessionToken = localStorage.getItem("session_token");
-    const res = await fetch(`/api/admin/domains/${domain.uid}/toggle`, {
+    const res = await fetch(`/api/admin/domains/${domain.id}/toggle`, {
       method: "POST",
       headers: { Authorization: `Bearer ${sessionToken}` },
     });
     if (res.ok) {
-      setDomains(domains.map(d => d.uid === domain.uid ? { ...d, is_enabled: !d.is_enabled } : d));
+      setDomains(domains.map(d => d.id === domain.id ? { ...d, is_enabled: !d.is_enabled } : d));
     } else {
       setError("Failed to update domain");
     }
@@ -88,7 +88,7 @@ export default function AdminDomainDepartment() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${sessionToken}`,
       },
-      body: JSON.stringify({ domain_id: selectedDomain.uid, name: newDeptName.trim() }),
+      body: JSON.stringify({ domain_id: selectedDomain.id, name: newDeptName.trim() }),
     });
     if (res.ok) {
       setNewDeptName("");
@@ -135,10 +135,10 @@ export default function AdminDomainDepartment() {
           </thead>
           <tbody>
             {domains.map((domain, idx) => (
-              <tr key={domain.uid} className={
+              <tr key={domain.id} className={
                 `border-t ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-yellow-100 transition-colors`
               }>
-                <td className="p-3 font-mono text-gray-900">{domain.domain}</td>
+                <td className="p-3 font-mono text-gray-900">{domain.name}</td>
                 <td className="p-3">
                   <button
                     className={domain.is_enabled ? "bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded shadow" : "bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded shadow"}
@@ -163,7 +163,7 @@ export default function AdminDomainDepartment() {
       )}
       {selectedDomain && (
         <div className="mt-8">
-          <h3 className="text-lg font-semibold text-[#b30000] mb-2">Departments for {selectedDomain.domain}</h3>
+          <h3 className="text-lg font-semibold text-[#b30000] mb-2">Departments for {selectedDomain.name}</h3>
           {deptLoading ? (
             <div>Loading departments...</div>
           ) : deptError ? (

@@ -2,18 +2,18 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface UserRow {
-  id: string;
+  id: string; // UUID
   email: string;
   is_admin: boolean;
-  domain: string; // This is domain_name
-  domain_id: string; // Add this
-  department_id: string | null;
+  domain: string;
+  domain_id: number;
+  department_id: number | null;
   department_name: string | null;
   link_url: string | null;
 }
 
 interface DepartmentForDomain {
-  id: string;
+  id: number;
   name: string;
 }
 
@@ -26,10 +26,10 @@ export default function AdminUserManagement() {
   const [domainFilter, setDomainFilter] = useState<string>("");
   const [departmentFilter, setDepartmentFilter] = useState<string>("");
 
-  const [inlineEdit, setInlineEdit] = useState<{ id: string; field: keyof UserRow; value: string | boolean } | null>(null);
+  const [inlineEdit, setInlineEdit] = useState<{ id: string; field: keyof UserRow; value: string | boolean | number } | null>(null);
 
   // Helper function to fetch departments for a domain
-  const fetchDepartmentsForUserDomain = async (domainId: string) => {
+  const fetchDepartmentsForUserDomain = async (domainId: number) => {
     const sessionToken = localStorage.getItem("session_token");
     if (!sessionToken) {
       setError("Session token not found. Please re-login.");
@@ -111,7 +111,7 @@ export default function AdminUserManagement() {
   }, {} as Record<string, Record<string, UserRow[]>>);
 
   // Inline edit handlers
-  function handleInlineEditStart(userId: string, field: keyof UserRow, value: string | boolean | null) {
+  function handleInlineEditStart(userId: string, field: keyof UserRow, value: string | boolean | number | null) {
     const user = users.find(u => u.id === userId);
     if (!user) return;
 
@@ -136,7 +136,11 @@ export default function AdminUserManagement() {
 
   function handleInlineEditChange(event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     if (!inlineEdit) return;
-    setInlineEdit({ ...inlineEdit, value: event.target.value });
+    let value: string | boolean | number = event.target.value;
+    if (inlineEdit.field === "department_id") {
+      value = value === "" ? "" : Number(value); // Use empty string for no department, number for valid
+    }
+    setInlineEdit({ ...inlineEdit, value });
   }
 
   async function handleInlineEditSave() {
@@ -155,15 +159,11 @@ export default function AdminUserManagement() {
       apiPayload.email = inlineEdit.value as string;
       optimisticChanges.email = inlineEdit.value as string;
     } else if (inlineEdit.field === "department_id") {
-      const selectedDeptId = (inlineEdit.value as string) || null; // Convert "" to null
-      apiPayload.department_id = selectedDeptId;
+      const selectedDeptId = inlineEdit.value === "" ? null : Number(inlineEdit.value);
+      apiPayload.department_id = selectedDeptId === null ? null : selectedDeptId.toString(); // send as string or null
       optimisticChanges.department_id = selectedDeptId;
-      if (selectedDeptId) {
-        const selectedDept = domainDepartments.find(d => d.id === selectedDeptId);
-        optimisticChanges.department_name = selectedDept ? selectedDept.name : null; // Use null if name not found post-fetch
-      } else {
-        optimisticChanges.department_name = null;
-      }
+      const selectedDept = domainDepartments.find(d => d.id === selectedDeptId);
+      optimisticChanges.department_name = selectedDept ? selectedDept.name : null;
     } else if (inlineEdit.field === "is_admin") {
       // The 'is_admin' inline editor uses a select with "true"/"false" strings.
       // Or, if it were a checkbox, inlineEdit.value would be boolean.

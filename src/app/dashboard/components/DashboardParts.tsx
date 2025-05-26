@@ -25,7 +25,7 @@ export function DepartmentSelect({
   label = "Select your department:",
   disabledOption = "Select department",
 }: {
-  departments: Array<{ id: string; name: string }>;
+  departments: Array<{ id: number; name: string }>;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   error?: string | null;
@@ -43,7 +43,7 @@ export function DepartmentSelect({
       >
         <option value="" disabled>{disabledOption}</option>
         {departments.map((dept) => (
-          <option key={dept.id} value={dept.id}>{dept.name}</option>
+          <option key={dept.id} value={dept.id.toString()}>{dept.name}</option>
         ))}
       </select>
       {error && <div className="text-red-600 text-xs">{error}</div>}
@@ -57,8 +57,8 @@ export function DepartmentCurrent({
   onChange,
   error,
 }: {
-  department: { id: string; name: string };
-  departments: Array<{ id: string; name: string }>;
+  department: { id: number; name: string };
+  departments: Array<{ id: number; name: string }>;
   onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   error?: string | null;
 }) {
@@ -69,11 +69,11 @@ export function DepartmentCurrent({
       <select
         id="department-select"
         className="rounded border border-blue-400 px-2 py-1"
-        value={department.id}
+        value={department.id.toString()}
         onChange={onChange}
       >
         {departments.map((dept) => (
-          <option key={dept.id} value={dept.id}>{dept.name}</option>
+          <option key={dept.id} value={dept.id.toString()}>{dept.name}</option>
         ))}
       </select>
       {error && <div className="text-red-600 text-xs">{error}</div>}

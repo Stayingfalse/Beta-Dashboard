@@ -12,14 +12,14 @@ import {
 } from "./components/DashboardParts";
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<{ email: string; domain?: string; department?: { id: string; name: string } } | null>(null);
-  const [departments, setDepartments] = useState<Array<{ id: string; name: string }>>([]);
+  const [user, setUser] = useState<{ email: string; domain?: string; department?: { id: number; name: string } } | null>(null);
+  const [departments, setDepartments] = useState<Array<{ id: number; name: string }>>([]);
   const [domainEnabled, setDomainEnabled] = useState<boolean | null>(null);
   const [linkInput, setLinkInput] = useState("");
   const [linkLoading, setLinkLoading] = useState(true);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [linkSuccess, setLinkSuccess] = useState(false);
-  const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
   const [departmentLoading, setDepartmentLoading] = useState(true);
   const [departmentError, setDepartmentError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -167,17 +167,18 @@ export default function DashboardPage() {
   // Department selection logic
   async function handleDepartmentChange(e: React.ChangeEvent<HTMLSelectElement>) {
     setDepartmentError(null);
-    setSelectedDepartment(e.target.value);
+    const selectedId = e.target.value === "" ? null : Number(e.target.value);
+    setSelectedDepartment(selectedId === null ? "" : selectedId.toString());
     // Call API to update user's department
     const sessionToken = localStorage.getItem("session_token");
     if (!sessionToken) return;
     const res = await fetch("/api/departments", {
       method: "POST",
       headers: { "Authorization": `Bearer ${sessionToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ department_id: e.target.value }),
+      body: JSON.stringify({ department_id: selectedId }),
     });
     if (res.ok) {
-      setUser((u) => u ? { ...u, department: departments.find(d => d.id === e.target.value) } : u);
+      setUser((u) => u ? { ...u, department: departments.find(d => d.id === selectedId) } : u);
       // If user has a wishlist link, update its department_id as well
       if (linkInput) {
         await fetch("/api/links", {

@@ -40,12 +40,12 @@ export async function GET(req: NextRequest) {
       FROM departments d
       WHERE d.domain_id = ?
       ORDER BY d.name ASC
-    `, [domainId]);
+    `, [Number(domainId)]);
     adminDebugLog('[departments] Query result:', rows);
     // Convert BigInt fields to Number for JSON serialization
     const safeRows = (rows as Array<{ [key: string]: unknown }>).map((row) => ({
       ...row,
-      id: String(row.id),
+      id: typeof row.id === 'bigint' ? Number(row.id) : row.id,
       user_count: typeof row.user_count === 'bigint' ? Number(row.user_count) : row.user_count,
       link_count: typeof row.link_count === 'bigint' ? Number(row.link_count) : row.link_count,
     }));
@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
   try {
     adminDebugLog('[departments] Inserting department', { domain_id, name });
     await conn.query(
-      `INSERT INTO departments (id, name, domain_id) VALUES (UUID(), ?, ?)`,
-      [name, domain_id]
+      `INSERT INTO departments (name, domain_id) VALUES (?, ?)` ,
+      [name, Number(domain_id)]
     );
     adminDebugLog('[departments] Inserted, fetching updated list');
     // Return updated list
@@ -87,12 +87,12 @@ export async function POST(req: NextRequest) {
       FROM departments d
       WHERE d.domain_id = ?
       ORDER BY d.name ASC
-    `, [domain_id]);
+    `, [Number(domain_id)]);
     adminDebugLog('[departments] Updated list:', rows);
     // Convert BigInt fields to Number for JSON serialization
     const safeRows = (rows as Array<{ [key: string]: unknown }>).map((row) => ({
       ...row,
-      id: String(row.id),
+      id: typeof row.id === 'bigint' ? Number(row.id) : row.id,
       user_count: typeof row.user_count === 'bigint' ? Number(row.user_count) : row.user_count,
       link_count: typeof row.link_count === 'bigint' ? Number(row.link_count) : row.link_count,
     }));

@@ -27,15 +27,16 @@ export async function GET() {
   try {
     adminDebugLog('[domains] Querying domains');
     const rows = await conn.query(`
-      SELECT d.uid, d.domain, d.is_enabled, COUNT(u.id) as user_count
+      SELECT d.id, d.name, d.is_enabled, COUNT(u.id) as user_count
       FROM domains d
-      LEFT JOIN users u ON u.domain_id = d.uid
-      GROUP BY d.uid, d.domain, d.is_enabled
-      ORDER BY d.domain ASC
+      LEFT JOIN users u ON u.domain_id = d.id
+      GROUP BY d.id, d.name, d.is_enabled
+      ORDER BY d.name ASC
     `);
     // Convert BigInt to number for serialization
     const safeRows = rows.map((row: Record<string, unknown>) => ({
       ...row,
+      id: typeof row.id === 'bigint' ? Number(row.id) : row.id,
       user_count: typeof row.user_count === 'bigint' ? Number(row.user_count) : row.user_count,
     }));
     adminDebugLog('[domains] Query result:', safeRows);
