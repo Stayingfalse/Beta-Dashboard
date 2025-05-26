@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import mariadb from "mariadb";
-import { adminDebugLog } from "../../debug";
-import { requireAuth } from "../../../auth/authHelpers";
+import { adminDebugLog } from "../../../debug";
+import { requireAuth } from "../../../../auth/authHelpers";
 
 const dbUrl = process.env.MARIADB_URL || "";
 let pool: mariadb.Pool | null = null;
@@ -17,11 +17,11 @@ if (dbUrl) {
   });
 }
 
-// DELETE: Remove department by id
+// DELETE: Remove domain by id, only if no users exist for that domain
 export async function DELETE(req: NextRequest) {
-  adminDebugLog("[departments/[id]] DELETE called");
+  adminDebugLog("[domains/[id]] DELETE called");
   if (!pool) {
-    adminDebugLog("[departments/[id]] No pool");
+    adminDebugLog("[domains/[id]] No pool");
     return NextResponse.json({ error: "DB not ready" }, { status: 500 });
   }
   const auth = await requireAuth(req, pool, { requireAdmin: true });
@@ -29,23 +29,27 @@ export async function DELETE(req: NextRequest) {
   // Get id from URL
   const url = new URL(req.url);
   const id = url.pathname.split("/").filter(Boolean).pop();
-  adminDebugLog("[departments/[id]] Parsed id:", id);
+  adminDebugLog("[domains/[id]] Parsed id:", id);
   if (!id) {
-    adminDebugLog("[departments/[id]] Missing id");
+    adminDebugLog("[domains/[id]] Missing id");
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
   const conn = await pool.getConnection();
   try {
-    adminDebugLog("[departments/[id]] Deleting department", id);
-    // Remove department_id from links before deleting department (to avoid FK constraint errors)
-    await conn.query(`UPDATE links SET department_id = NULL WHERE department_id = ?`, [id]);
-    const result = await conn.query(`DELETE FROM departments WHERE id = ?`, [id]);
-    adminDebugLog("[departments/[id]] Delete success", result);
+    // Check for users in this domain
+    const [user] = await conn.query("SELECT id FROM users WHERE domain_id = ? LIMIT 1", [id]);
+    if (user) {
+      adminDebugLog("[domains/[id]] Cannot delete domain with users", id);
+      return NextResponse.json({ error: "Cannot delete domain: delete all users in this domain first." }, { status: 400 });
+    }
+    // Remove domain
+    const result = await conn.query("DELETE FROM domains WHERE id = ?", [id]);
+    adminDebugLog("[domains/[id]] Delete success", result);
     return NextResponse.json({ success: true });
   } catch (err) {
-    adminDebugLog("[departments/[id]] Delete error", err);
+    adminDebugLog("[domains/[id]] Delete error", err);
     return NextResponse.json(
-      { error: "Failed to delete department", details: String(err) },
+      { error: "Failed to delete domain", details: String(err) },
       { status: 500 }
     );
   } finally {

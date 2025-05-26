@@ -150,10 +150,31 @@ export default function AdminDomainDepartment() {
                 <td className="p-3 text-center text-gray-800">{domain.user_count}</td>
                 <td className="p-3 text-center">
                   <button
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow mr-2"
                     onClick={() => setSelectedDomain(domain)}
                   >
                     Manage
+                  </button>
+                  <button
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded shadow"
+                    onClick={async () => {
+                      if (!window.confirm(`Delete domain ${domain.name}? This cannot be undone.`)) return;
+                      setError(null);
+                      const sessionToken = localStorage.getItem("session_token");
+                      const res = await fetch(`/api/admin/domains/${domain.id}`, {
+                        method: "DELETE",
+                        headers: { Authorization: `Bearer ${sessionToken}` },
+                      });
+                      if (res.ok) {
+                        setDomains(domains.filter(d => d.id !== domain.id));
+                        if (selectedDomain && selectedDomain.id === domain.id) setSelectedDomain(null);
+                      } else {
+                        const data = await res.json().catch(() => ({}));
+                        setError(data?.error || "Failed to delete domain");
+                      }
+                    }}
+                  >
+                    Delete
                   </button>
                 </td>
               </tr>
@@ -192,7 +213,7 @@ export default function AdminDomainDepartment() {
                           className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded shadow"
                           onClick={() => handleRemoveDepartment(dept.id)}
                         >
-                          Remove
+                          Delete
                         </button>
                       </td>
                     </tr>
