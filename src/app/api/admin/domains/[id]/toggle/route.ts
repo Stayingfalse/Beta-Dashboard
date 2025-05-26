@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
   const conn = await pool.getConnection();
   try {
     adminDebugLog('[domains/[id]/toggle] Toggling is_enabled for', id);
-    // Toggle is_enabled
+    // Toggle is_enabled (use INT id, not uid)
     await conn.query(
-      `UPDATE domains SET is_enabled = NOT is_enabled WHERE uid = ?`,
+      `UPDATE domains SET is_enabled = NOT is_enabled WHERE id = ?`,
       [id]
     );
     adminDebugLog('[domains/[id]/toggle] Toggle success');

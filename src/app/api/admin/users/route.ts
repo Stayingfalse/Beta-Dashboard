@@ -66,6 +66,11 @@ export async function PUT(req: NextRequest) {
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id, email, department_id, is_admin } = await req.json();
   if (!id) return NextResponse.json({ error: "Missing user id" }, { status: 400 });
+  // Prevent current user from removing their own admin status
+  if (id === auth.userId && is_admin === false) {
+    adminDebugLog('[users] Prevented self-demotion for user', id);
+    return NextResponse.json({ error: "You cannot remove your own admin status." }, { status: 400 });
+  }
   // Fetch current user data if email is not provided
   let finalEmail = email;
   const conn = await pool.getConnection();
@@ -76,6 +81,11 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ error: "User not found or missing email" }, { status: 400 });
       }
       finalEmail = userRow.email;
+    }
+    // Prevent update if no actual changes (id is required, but all other fields can be undefined or unchanged)
+    if (email === undefined && department_id === undefined && is_admin === undefined) {
+      adminDebugLog('[users] PUT: No changes, skipping update for user', id);
+      return NextResponse.json({ success: true });
     }
     await conn.query(
       `UPDATE users SET email = ?, department_id = ?, is_admin = ? WHERE id = ?`,
