@@ -12,24 +12,24 @@ export async function GET(req: NextRequest) {
   const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const conn = await pool.getConnection();
-  try {
-    const rows = await conn.query(`
+  try {    const rows = await conn.query(`
       SELECT 
         u.id, u.email, u.is_admin, 
         d.name AS domain, d.id AS domain_id,
         u.department_id, dep.name AS department_name,
-        l.url AS link_url
+        COUNT(l.id) AS link_count
       FROM users u
       LEFT JOIN domains d ON u.domain_id = d.id
       LEFT JOIN departments dep ON u.department_id = dep.id
       LEFT JOIN links l ON l.uid = u.id
-    `);
-    adminDebugLog('[users] Query result:', rows);
+      GROUP BY u.id, u.email, u.is_admin, d.name, d.id, u.department_id, dep.name
+    `);    adminDebugLog('[users] Query result:', rows);
     // Convert BigInt fields if any (is_admin is TINYINT(1) which is fine)
     const safeRows = (rows as Array<Record<string, unknown>>).map(row => ({
       ...row,
       is_admin: !!(row as Record<string, unknown>).is_admin,
-      // Ensure any other BigInts are converted if they exist
+      // Convert BigInt link_count to Number
+      link_count: Number((row as Record<string, unknown>).link_count || 0),
     }));
     return NextResponse.json(safeRows);
   } catch (err) {
