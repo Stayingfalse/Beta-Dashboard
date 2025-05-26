@@ -66,11 +66,20 @@ export async function PUT(req: NextRequest) {
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id, email, department_id, is_admin } = await req.json();
   if (!id) return NextResponse.json({ error: "Missing user id" }, { status: 400 });
+  // Fetch current user data if email is not provided
+  let finalEmail = email;
   const conn = await pool.getConnection();
   try {
+    if (!finalEmail) {
+      const [userRow] = await conn.query("SELECT email FROM users WHERE id = ?", [id]);
+      if (!userRow || !userRow.email) {
+        return NextResponse.json({ error: "User not found or missing email" }, { status: 400 });
+      }
+      finalEmail = userRow.email;
+    }
     await conn.query(
       `UPDATE users SET email = ?, department_id = ?, is_admin = ? WHERE id = ?`,
-      [email, department_id || null, !!is_admin, id]
+      [finalEmail, department_id || null, !!is_admin, id]
     );
     adminDebugLog('[users] Updated user', id);
     return NextResponse.json({ success: true });
