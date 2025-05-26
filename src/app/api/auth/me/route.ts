@@ -29,13 +29,13 @@ export async function GET(req: NextRequest) {
     // Check domain enabled state
     const [userDomain] = await conn.query("SELECT domain_id FROM users WHERE id = ? LIMIT 1", [session.uid]);
     if (!userDomain) return NextResponse.json({ error: "User domain not found" }, { status: 401 });
-    const [domainRow] = await conn.query("SELECT is_enabled FROM domains WHERE uid = ? LIMIT 1", [userDomain.domain_id]);
+    const [domainRow] = await conn.query("SELECT is_enabled FROM domains WHERE id = ? LIMIT 1", [userDomain.domain_id]);
     const domain_enabled = !!(domainRow && domainRow.is_enabled);
     // Get department name if set
     let department = null;
     if (user.department_id) {
       const [dept] = await conn.query("SELECT id, name FROM departments WHERE id = ? LIMIT 1", [user.department_id]);
-      if (dept) department = { id: String(dept.id), name: dept.name };
+      if (dept) department = { id: dept.id, name: dept.name };
     }
     return NextResponse.json({ user: { ...user, department }, domain_enabled });
   } finally {
