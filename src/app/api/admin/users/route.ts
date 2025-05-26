@@ -104,12 +104,15 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "Missing user id" }, { status: 400 });
   const conn = await pool.getConnection();
   try {
-    await conn.query(`DELETE FROM users WHERE id = ?`, [id]);
-    adminDebugLog('[users] Deleted user', id);
+    // Remove all links and allocations for this user before deleting user (to avoid FK constraint errors)
+    await conn.query(`DELETE FROM link_allocations WHERE user_id = ?`, [id]);
+    await conn.query(`DELETE FROM links WHERE uid = ?`, [id]);
+    const result = await conn.query(`DELETE FROM users WHERE id = ?`, [id]);
+    adminDebugLog('[users] Deleted user', id, 'result:', result);
     return NextResponse.json({ success: true });
   } catch (err) {
     adminDebugLog('[users] DELETE error', err);
-    return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete user", details: String(err) }, { status: 500 });
   } finally {
     conn.release();
   }
