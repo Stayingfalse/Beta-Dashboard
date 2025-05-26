@@ -74,15 +74,28 @@ export async function POST(req: NextRequest) {
   }
   if (!url.startsWith("https://www.amazon.co.uk/hz/wishlist/")) {
     return NextResponse.json({ error: "Invalid Amazon UK wishlist link format." }, { status: 400 });
-  }
-  const conn = await pool.getConnection();
+  } const conn = await pool.getConnection();
   try {
+    // Check if user already has a link
+    const [existingLink] = await conn.query("SELECT id, url FROM links WHERE uid = ? LIMIT 1", [user.id]);
+
     // Upsert link for user, now including department_id and domain_id
-    await conn.query(
+    const result = await conn.query(
       `INSERT INTO links (uid, url, department_id, domain_id) VALUES (?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE url = VALUES(url), department_id = VALUES(department_id), domain_id = VALUES(domain_id)`,
       [user.id, url, user.department_id, user.domain_id]
     );
+
+    // Debug log to track upsert behavior
+    console.log('[links] Upsert result:', {
+      user_id: user.id,
+      had_existing_link: !!existingLink,
+      existing_url: existingLink?.url,
+      new_url: url,
+      affected_rows: result.affectedRows,
+      insert_id: result.insertId
+    });
+
     return NextResponse.json({ success: true });
   } finally {
     conn.release();

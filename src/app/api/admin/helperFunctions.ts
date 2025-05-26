@@ -22,7 +22,7 @@ export function getMariaDbPool() {
   const dbPassword = process.env.MARIADB_PASSWORD;
   const dbPort = process.env.MARIADB_PORT;
   const dbDatabase = process.env.MARIADB_DATABASE;
-    adminDebugLog("Creating MariaDB pool with:", {
+  adminDebugLog("Creating MariaDB pool with:", {
     dbUrl: dbUrl ? `${dbUrl.split(':')[0]}://${dbUrl.split('@')[0].split(':')[1]}:***@${dbUrl.split('@')[1]}` : undefined, // Better credential hiding
     dbHost,
     dbUser,
@@ -30,7 +30,7 @@ export function getMariaDbPool() {
     dbDatabase,
     hasPassword: !!dbPassword
   });
-  
+
   try {
     if (dbUrl) {
       const url = new URL(dbUrl);
@@ -43,7 +43,7 @@ export function getMariaDbPool() {
         pathname: url.pathname,
         database: url.pathname.replace(/^\//, "")
       });
-      
+
       poolInstance = mariadb.createPool({
         host: url.hostname,
         user: url.username,
@@ -117,8 +117,8 @@ export async function testDatabaseConnection(): Promise<{ success: boolean; erro
   } catch (error: unknown) {
     const errorObj = error as Error & { code?: string; errno?: number; sqlState?: string };
     adminDebugLog("Database test failed:", error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: errorObj.message,
       details: {
         code: errorObj.code,

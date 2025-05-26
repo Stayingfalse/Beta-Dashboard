@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
   const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const conn = await pool.getConnection();
-  try {    const rows = await conn.query(`
+  try {
+    const rows = await conn.query(`
       SELECT 
         u.id, u.email, u.is_admin, 
         d.name AS domain, d.id AS domain_id,
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
       LEFT JOIN departments dep ON u.department_id = dep.id
       LEFT JOIN links l ON l.uid = u.id
       GROUP BY u.id, u.email, u.is_admin, d.name, d.id, u.department_id, dep.name
-    `);    adminDebugLog('[users] Query result:', rows);
+    `); adminDebugLog('[users] Query result:', rows);
     // Convert BigInt fields if any (is_admin is TINYINT(1) which is fine)
     const safeRows = (rows as Array<Record<string, unknown>>).map(row => ({
       ...row,
@@ -71,16 +72,16 @@ export async function PUT(req: NextRequest) {
     if (email === undefined && department_id === undefined && is_admin === undefined) {
       adminDebugLog('[users] PUT: No changes, skipping update for user', id);
       return NextResponse.json({ success: true });
-    }    await conn.query(
+    } await conn.query(
       `UPDATE users SET email = ?, department_id = ?, is_admin = ? WHERE id = ?`,
       [finalEmail, department_id || null, !!is_admin, id]
     );
-      // If department_id changed, update the department_id on the user's existing links to prevent duplicates
+    // If department_id changed, update the department_id on the user's existing links to prevent duplicates
     if (department_id !== undefined) {
       const linkUpdateResult = await conn.query("UPDATE links SET department_id = ? WHERE uid = ?", [department_id || null, id]);
       adminDebugLog('[users] Updated user links department', { user_id: id, department_id, link_updates: linkUpdateResult.affectedRows });
     }
-    
+
     adminDebugLog('[users] Updated user', id);
     return NextResponse.json({ success: true });
   } catch (err) {

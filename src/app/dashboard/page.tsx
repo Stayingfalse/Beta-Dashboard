@@ -47,7 +47,7 @@ export default function DashboardPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [allocatedLinks, setAllocatedLinks] = useState<AllocatedLink[]>([]);
   const [allocLoading, setAllocLoading] = useState(false);
-  const [allocError, setAllocError] = useState<string | null>(null);  const [allocSuccess, setAllocSuccess] = useState<string | null>(null);
+  const [allocError, setAllocError] = useState<string | null>(null); const [allocSuccess, setAllocSuccess] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -232,8 +232,8 @@ export default function DashboardPage() {
   }
   return (
     <PageLayout>
-      <DashboardLayout 
-        user={user} 
+      <DashboardLayout
+        user={user}
         isAdmin={isAdmin}
         onLogout={handleLogout}
       >

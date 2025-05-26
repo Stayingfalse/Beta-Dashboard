@@ -47,11 +47,11 @@ export async function POST(req: NextRequest) {
     const [dept] = await conn.query("SELECT id FROM departments WHERE id = ? AND domain_id = ? LIMIT 1", [department_id, user.domain_id]);
     if (!dept) return NextResponse.json({ error: "Invalid department for your domain" }, { status: 400 });    // Update user's department
     await conn.query("UPDATE users SET department_id = ? WHERE id = ?", [department_id, user.id]);
-    
+
     // Update the department_id on the user's existing links to prevent duplicates
     const linkUpdateResult = await conn.query("UPDATE links SET department_id = ? WHERE uid = ?", [department_id, user.id]);
     adminDebugLog('[departments] Updated user department and links', { user_id: user.id, department_id, link_updates: linkUpdateResult.affectedRows });
-    
+
     return NextResponse.json({ success: true });
   } finally {
     conn.release();
