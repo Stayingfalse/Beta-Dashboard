@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDebugLog, getMariaDbPool } from "../helperFunctions";
 
 // GET: List all domains with user counts
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   const pool = getMariaDbPool();
   if (!pool) {
     return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 }
 
 // PUT: Update an existing domain
-export async function PUT(_req: NextRequest) {
+export async function PUT(req: NextRequest) {
   const pool = getMariaDbPool();
   if (!pool) {
     return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
@@ -71,7 +71,7 @@ export async function PUT(_req: NextRequest) {
   adminDebugLog('[domains] PUT called');
   const conn = await pool.getConnection();
   try {
-    const body = await _req.json();
+    const body = await req.json();
     adminDebugLog('[domains] Updating domain with data:', body);
     await conn.query(
       `

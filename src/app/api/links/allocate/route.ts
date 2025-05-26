@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(_req: NextRequest) {
+export async function POST() {
   const pool = getMariaDbPool();
   if (!pool) {
     return NextResponse.json(

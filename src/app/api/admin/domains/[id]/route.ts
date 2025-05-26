@@ -50,7 +50,7 @@ export async function DELETE(req: NextRequest) {
 }
 
 // GET: Get domain by id
-export async function GET(_req: NextRequest) {
+export async function GET() {
   const pool = getMariaDbPool();
   if (!pool) {
     return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
@@ -59,7 +59,7 @@ export async function GET(_req: NextRequest) {
 }
 
 // POST: Update domain by id
-export async function POST(_req: NextRequest) {
+export async function POST() {
   const pool = getMariaDbPool();
   if (!pool) {
     return NextResponse.json({ error: "Database is not configured. Please set MARIADB_URL or all required MariaDB environment variables." }, { status: 500 });
