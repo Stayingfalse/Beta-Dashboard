@@ -29,13 +29,7 @@ export async function GET(req: NextRequest) {
   const conn = await pool.getConnection();
   try {
     const rows = await conn.query(`
-      SELECT u.id, u.email, u.is_admin, u.domain_id, d.domain as domain_name, dep.id as department_id, dep.name as department_name,
-        l.url as link_url
-      FROM users u
-      LEFT JOIN domains d ON u.domain_id = d.uid
-      LEFT JOIN departments dep ON u.department_id = dep.id
-      LEFT JOIN links l ON l.uid = u.id
-      ORDER BY u.email ASC
+      SELECT * FROM users
     `);
     adminDebugLog('[users] Query result:', rows);
     // Convert BigInt fields if any (is_admin is TINYINT(1) which is fine)
