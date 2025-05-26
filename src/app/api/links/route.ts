@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import mariadb from "mariadb";
 import type { LinkRow, LinkIdRow } from "./types";
+import { adminDebugLog } from "../admin/debug";
 
 const dbUrl = process.env.MARIADB_URL || "";
 let pool: mariadb.Pool | null = null;
@@ -17,6 +18,7 @@ if (dbUrl) {
 }
 
 async function getUserFromToken(token: string) {
+  adminDebugLog('[links] getUserFromToken called', { token });
   if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
@@ -24,11 +26,13 @@ async function getUserFromToken(token: string) {
       "SELECT uid FROM sessions WHERE token = ?",
       [token]
     );
+    adminDebugLog('[links] session lookup', { session });
     if (!session) return null;
     const [user] = await conn.query(
       "SELECT id, email, department_id FROM users WHERE id = ?",
       [session.uid]
     );
+    adminDebugLog('[links] user lookup', { user });
     return user || null;
   } finally {
     conn.release();
@@ -36,6 +40,7 @@ async function getUserFromToken(token: string) {
 }
 
 export async function GET(req: NextRequest) {
+  adminDebugLog('[links] GET called');
   if (!pool)
     return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
   const auth = req.headers.get("authorization");
@@ -60,6 +65,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  adminDebugLog('[links] POST called');
   if (!pool)
     return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
   const auth = req.headers.get("authorization");
@@ -100,6 +106,7 @@ export async function POST(req: NextRequest) {
 
 // POST /api/links/allocate: Allocate 3 (or 1 additional) links to a user
 export async function PUT(req: NextRequest) {
+  adminDebugLog('[links] PUT called');
   if (!pool)
     return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
   const auth = req.headers.get("authorization");
@@ -115,15 +122,18 @@ export async function PUT(req: NextRequest) {
   const numToAllocate = additional ? 1 : 3;
   const conn = await pool.getConnection();
   try {
+    adminDebugLog('[links] Allocating links', { userId: user.id, additional });
     // Get all link_ids already allocated to this user
     const allocatedRows = await conn.query(
       "SELECT link_id FROM link_allocations WHERE user_id = ?",
       [user.id]
     );
     const alreadyAllocated = new Set(allocatedRows.map((r: LinkIdRow) => Number(r.link_id)));
+    adminDebugLog('[links] Already allocated', { alreadyAllocated });
     // Get user's own link id
     const [ownLink] = await conn.query("SELECT id FROM links WHERE uid = ?", [user.id]);
     const ownLinkId = ownLink ? Number(ownLink.id) : null;
+    adminDebugLog('[links] Own link id', { ownLinkId });
     // Select eligible links (not own, not already allocated)
     const eligibleLinks = await conn.query(
       `SELECT id, url, times_allocated, times_purchased, error_count FROM links`
@@ -131,6 +141,8 @@ export async function PUT(req: NextRequest) {
     const filtered = (eligibleLinks as LinkRow[]).filter((l: LinkRow) =>
       Number(l.id) !== ownLinkId && !alreadyAllocated.has(Number(l.id))
     );
+    adminDebugLog('[links] Eligible links', { eligibleLinks });
+    adminDebugLog('[links] Filtered links', { filtered });
     // Sort by times_allocated, then times_purchased, then error_count
     filtered.sort((a: LinkRow, b: LinkRow) =>
       Number(a.times_allocated) - Number(b.times_allocated) ||
@@ -161,6 +173,7 @@ export async function PUT(req: NextRequest) {
       }
       i += group.length;
     }
+    adminDebugLog('[links] toAllocate', { toAllocate });
     // Allocate and update stats
     for (const link of toAllocate) {
       await conn.query(
@@ -180,10 +193,10 @@ export async function PUT(req: NextRequest) {
       times_purchased: Number(l.times_purchased),
       error_count: Number(l.error_count)
     }));
+    adminDebugLog('[links] Allocation result', { result });
     return NextResponse.json({ allocated: result });
-  } catch {
-    // Optionally log error for debugging
-    // console.error('Failed to allocate links', err);
+  } catch (e) {
+    adminDebugLog('[links] Error allocating links', { error: e });
     return NextResponse.json({ error: "Failed to allocate links" }, { status: 500 });
   } finally {
     conn.release();
