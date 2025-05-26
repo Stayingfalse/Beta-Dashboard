@@ -60,14 +60,14 @@ async function getOrCreateDomain(domain: string) {
   const conn = await pool.getConnection();
   try {
     // Check if domain exists
-    const [row] = await conn.query("SELECT * FROM domains WHERE domain = ? LIMIT 1", [domain]);
+    const [row] = await conn.query("SELECT * FROM domains WHERE name = ? LIMIT 1", [domain]);
     if (row) {
-      return { uid: row.uid, is_enabled: !!row.is_enabled };
+      return { id: row.id, is_enabled: !!row.is_enabled };
     } else {
       // Create new domain
-      const domainUid = randomUUID();
-      await conn.query("INSERT INTO domains (uid, domain, is_enabled) VALUES (?, ?, false)", [domainUid, domain]);
-      return { uid: domainUid, is_enabled: false };
+      await conn.query("INSERT INTO domains (name, is_enabled) VALUES (?, false)", [domain]);
+      const [newRow] = await conn.query("SELECT * FROM domains WHERE name = ? LIMIT 1", [domain]);
+      return { id: newRow.id, is_enabled: false };
     }
   } finally {
     conn.release();
@@ -82,7 +82,7 @@ async function createUser(email: string) {
     const userId = randomUUID();
     // Ensure domain exists in domains table
     const domainInfo = await getOrCreateDomain(domain);
-    await conn.query("INSERT INTO users (id, email, is_admin, domain_id) VALUES (?, ?, false, ?)", [userId, email, domainInfo.uid]);
+    await conn.query("INSERT INTO users (id, email, is_admin, domain_id) VALUES (?, ?, false, ?)", [userId, email, domainInfo.id]);
     return { uid: userId, email, is_admin: false, domain };
   } finally {
     conn.release();
