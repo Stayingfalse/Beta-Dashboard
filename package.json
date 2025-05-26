@@ -1,6 +1,6 @@
 {
   "name": "beta-dashboard",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -11,7 +11,7 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "mariadb": "^3.4.2",
-    "next": "15.1.8",
+    "next": "^15.3.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
