@@ -89,14 +89,16 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
-  
+  if (!user.department_id || !user.domain_id) {
+    return NextResponse.json({ error: "User must have department and domain set" }, { status: 400 });
+  }
   const conn = await pool.getConnection();
   try {
-    // Upsert link for user, now including department_id
+    // Upsert link for user, now including department_id and domain_id
     await conn.query(
-      `INSERT INTO links (uid, url, department_id) VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE url = VALUES(url), department_id = VALUES(department_id)`,
-      [user.id, url, user.department_id]
+      `INSERT INTO links (uid, url, department_id, domain_id) VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE url = VALUES(url), department_id = VALUES(department_id), domain_id = VALUES(domain_id)`,
+      [user.id, url, user.department_id, user.domain_id]
     );
     return NextResponse.json({ success: true });
   } finally {
