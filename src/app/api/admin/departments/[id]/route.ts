@@ -1,21 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import mariadb from "mariadb";
-import { adminDebugLog } from "../../debug";
+import { adminDebugLog, getMariaDbPool } from "../../debug";
 import { requireAuth } from "../../../auth/authHelpers";
 
-const dbUrl = process.env.MARIADB_URL || "";
-let pool: mariadb.Pool | null = null;
-if (dbUrl) {
-  const url = new URL(dbUrl);
-  pool = mariadb.createPool({
-    host: url.hostname,
-    user: url.username,
-    password: url.password,
-    port: Number(url.port) || 3306,
-    database: url.pathname.replace(/^\//, ""),
-    connectionLimit: 5,
-  });
-}
+const pool = getMariaDbPool();
 
 // DELETE: Remove department by id
 export async function DELETE(req: NextRequest) {

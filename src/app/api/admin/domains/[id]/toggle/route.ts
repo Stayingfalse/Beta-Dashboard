@@ -1,21 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import mariadb from "mariadb";
 import { adminDebugLog } from "../../../debug";
 import { requireAuth } from "../../../../auth/authHelpers";
+import { getMariaDbPool } from "../../debug";
 
-const dbUrl = process.env.MARIADB_URL || "";
-let pool: mariadb.Pool | null = null;
-if (dbUrl) {
-  const url = new URL(dbUrl);
-  pool = mariadb.createPool({
-    host: url.hostname,
-    user: url.username,
-    password: url.password,
-    port: Number(url.port) || 3306,
-    database: url.pathname.replace(/^\//, ""),
-    connectionLimit: 5,
-  });
-}
+const pool = getMariaDbPool();
 
 // POST: Toggle domain enabled/disabled
 export async function POST(req: NextRequest) {

@@ -1,7 +1,10 @@
 import { NextRequest } from "next/server";
 import mariadb from "mariadb";
+import { getMariaDbPool } from "../../admin/debug";
 
-export async function requireAuth(req: NextRequest, pool: mariadb.Pool, { requireAdmin = false } = {}): Promise<{ userId: string, isAdmin: boolean } | null> {
+const pool = getMariaDbPool();
+
+export async function requireAuth(req: NextRequest, { requireAdmin = false } = {}): Promise<{ userId: string, isAdmin: boolean } | null> {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.replace(/^Bearer /, "");
   if (!token) return null;

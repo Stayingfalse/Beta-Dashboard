@@ -1,26 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import mariadb from "mariadb";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
+import { getMariaDbPool } from "../admin/debug";
 
-// Parse MARIADB_URL from environment
-const dbUrl = process.env.MARIADB_URL || "";
-let pool: mariadb.Pool | null = null;
-
-if (dbUrl) {
-  const url = new URL(dbUrl);
-  pool = mariadb.createPool({
-    host: url.hostname,
-    user: url.username,
-    password: url.password,
-    port: Number(url.port) || 3306,
-    database: url.pathname.replace(/^\//, ""),
-    connectionLimit: 5,
-  });
-}
+const pool = getMariaDbPool();
 
 async function getUserByEmail(email: string) {
-  if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
     const rows = await conn.query("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
@@ -32,7 +17,6 @@ async function getUserByEmail(email: string) {
 
 // Set or update admin password (hash)
 async function setAdminPassword(email: string, password: string) {
-  if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
     const hash = await bcrypt.hash(password, 10);
@@ -56,7 +40,6 @@ async function checkAdminPassword(email: string, password: string) {
 
 // Helper to get or create domain and check if enabled
 async function getOrCreateDomain(domain: string) {
-  if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
     // Check if domain exists
@@ -75,7 +58,6 @@ async function getOrCreateDomain(domain: string) {
 }
 
 async function createUser(email: string) {
-  if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
     const domain = (email.split('@')[1] || '').toLowerCase();
@@ -90,7 +72,6 @@ async function createUser(email: string) {
 }
 
 async function createSession(uid: string) {
-  if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
     const expires = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
@@ -107,7 +88,6 @@ async function createSession(uid: string) {
 
 // Create a guest session (no user, or special guest user id)
 export async function GET() {
-  if (!pool) return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
   const conn = await pool.getConnection();
   try {
     const expires = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
@@ -124,7 +104,6 @@ export async function GET() {
 
 // Update session to link to user after authentication
 async function linkSessionToUser(token: string, userId: string) {
-  if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
     await conn.query(

@@ -1,24 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import mariadb from "mariadb";
+import { getMariaDbPool } from "../../admin/debug";
 import type { LinkRow } from "../types";
-import { adminDebugLog } from "../../admin/debug";
 
-const dbUrl = process.env.MARIADB_URL || "";
-let pool: mariadb.Pool | null = null;
-if (dbUrl) {
-  const url = new URL(dbUrl);
-  pool = mariadb.createPool({
-    host: url.hostname,
-    user: url.username,
-    password: url.password,
-    port: Number(url.port) || 3306,
-    database: url.pathname.replace(/^\//, ""),
-    connectionLimit: 5,
-  });
-}
+const pool = getMariaDbPool();
 
 async function getUserFromToken(token: string) {
-  adminDebugLog("[links/allocate] getUserFromToken called", { token });
   if (!pool) throw new Error("MARIADB_URL not set");
   const conn = await pool.getConnection();
   try {
@@ -26,13 +12,11 @@ async function getUserFromToken(token: string) {
       "SELECT uid FROM sessions WHERE token = ?",
       [token]
     );
-    adminDebugLog("[links/allocate] session lookup", { session });
     if (!session) return null;
     const [user] = await conn.query(
       "SELECT id, email, department_id FROM users WHERE id = ?",
       [session.uid]
     );
-    adminDebugLog("[links/allocate] user lookup", { user });
     return user || null;
   } finally {
     conn.release();
@@ -40,23 +24,19 @@ async function getUserFromToken(token: string) {
 }
 
 export async function GET(req: NextRequest) {
-  adminDebugLog("[links/allocate] GET called");
   if (!pool)
     return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });
   const auth = req.headers.get("authorization");
-  adminDebugLog("[links/allocate] Authorization header", { auth });
   if (!auth || !auth.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const token = auth.replace("Bearer ", "");
   const user = await getUserFromToken(token);
   if (!user) {
-    adminDebugLog("[links/allocate] No user found for token", { token });
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const conn = await pool.getConnection();
   try {
-    adminDebugLog("[links/allocate] Querying allocated links", { userId: user.id });
     const rows = await conn.query(
       `SELECT l.id, l.url, l.times_allocated, l.times_purchased, l.error_count
        FROM link_allocations a
@@ -65,7 +45,6 @@ export async function GET(req: NextRequest) {
        ORDER BY a.allocated_at ASC`,
       [user.id]
     );
-    adminDebugLog("[links/allocate] Query result", { rows });
     const result = (rows as LinkRow[]).map((l) => ({
       ...l,
       id: Number(l.id),
@@ -73,10 +52,8 @@ export async function GET(req: NextRequest) {
       times_purchased: Number(l.times_purchased),
       error_count: Number(l.error_count),
     }));
-    adminDebugLog("[links/allocate] Returning allocated links", { result });
     return NextResponse.json({ allocated: result });
   } catch (e) {
-    adminDebugLog("[links/allocate] Error fetching allocated links", { error: e });
     return NextResponse.json(
       { error: "Failed to fetch allocated links" },
       { status: 500 }

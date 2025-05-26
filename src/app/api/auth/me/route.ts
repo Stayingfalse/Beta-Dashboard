@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import mariadb from "mariadb";
+import { getMariaDbPool } from "../admin/debug";
 
-const dbUrl = process.env.MARIADB_URL || "";
-let pool: mariadb.Pool | null = null;
-if (dbUrl) {
-  const url = new URL(dbUrl);
-  pool = mariadb.createPool({
-    host: url.hostname,
-    user: url.username,
-    password: url.password,
-    port: Number(url.port) || 3306,
-    database: url.pathname.replace(/^\//, ""),
-    connectionLimit: 5,
-  });
-}
+const pool = getMariaDbPool();
 
 export async function GET(req: NextRequest) {
   if (!pool) return NextResponse.json({ error: "MARIADB_URL not set" }, { status: 500 });

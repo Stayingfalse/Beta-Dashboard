@@ -1,30 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import mariadb from "mariadb";
-import { adminDebugLog } from "../debug";
+import { adminDebugLog, getMariaDbPool } from "../debug";
 import { requireAuth } from "../../auth/authHelpers";
 
-const dbUrl = process.env.MARIADB_URL || "";
-let pool: mariadb.Pool | null = null;
-if (dbUrl) {
-  const url = new URL(dbUrl);
-  pool = mariadb.createPool({
-    host: url.hostname,
-    user: url.username,
-    password: url.password,
-    port: Number(url.port) || 3306,
-    database: url.pathname.replace(/^\//, ""),
-    connectionLimit: 5,
-  });
-}
+const pool = getMariaDbPool();
 
 // GET: List all users with domain, department, and link info
 export async function GET(req: NextRequest) {
   adminDebugLog('[users] GET called');
-  if (!pool) {
-    adminDebugLog('[users] No pool');
-    return NextResponse.json([], { status: 500 });
-  }
-  const auth = await requireAuth(req, pool, { requireAdmin: true });
+  const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const conn = await pool.getConnection();
   try {
@@ -58,11 +41,7 @@ export async function GET(req: NextRequest) {
 // PUT: Edit user (email, department, is_admin)
 export async function PUT(req: NextRequest) {
   adminDebugLog('[users] PUT called');
-  if (!pool) {
-    adminDebugLog('[users] No pool');
-    return NextResponse.json({ error: "DB not ready" }, { status: 500 });
-  }
-  const auth = await requireAuth(req, pool, { requireAdmin: true });
+  const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id, email, department_id, is_admin } = await req.json();
   if (!id) return NextResponse.json({ error: "Missing user id" }, { status: 400 });
@@ -104,11 +83,7 @@ export async function PUT(req: NextRequest) {
 // DELETE: Delete user
 export async function DELETE(req: NextRequest) {
   adminDebugLog('[users] DELETE called');
-  if (!pool) {
-    adminDebugLog('[users] No pool');
-    return NextResponse.json({ error: "DB not ready" }, { status: 500 });
-  }
-  const auth = await requireAuth(req, pool, { requireAdmin: true });
+  const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: "Missing user id" }, { status: 400 });

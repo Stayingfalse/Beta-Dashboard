@@ -1,30 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import mariadb from "mariadb";
-import { adminDebugLog } from "../debug";
+import { adminDebugLog, getMariaDbPool } from "../debug";
 import { requireAuth } from "../../auth/authHelpers";
 
-const dbUrl = process.env.MARIADB_URL || "";
-let pool: mariadb.Pool | null = null;
-if (dbUrl) {
-  const url = new URL(dbUrl);
-  pool = mariadb.createPool({
-    host: url.hostname,
-    user: url.username,
-    password: url.password,
-    port: Number(url.port) || 3306,
-    database: url.pathname.replace(/^\//, ""),
-    connectionLimit: 5,
-  });
-}
+const pool = getMariaDbPool();
 
 // GET: List departments for a domain with user/link counts
 export async function GET(req: NextRequest) {
   adminDebugLog('[departments] GET called');
-  if (!pool) {
-    adminDebugLog('[departments] No pool');
-    return NextResponse.json([], { status: 500 });
-  }
-  const auth = await requireAuth(req, pool, { requireAdmin: true });
+  const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(req.url);
   const domainId = searchParams.get("domain_id");
@@ -62,11 +45,7 @@ export async function GET(req: NextRequest) {
 // POST: Add department to domain
 export async function POST(req: NextRequest) {
   adminDebugLog('[departments] POST called');
-  if (!pool) {
-    adminDebugLog('[departments] No pool');
-    return NextResponse.json([], { status: 500 });
-  }
-  const auth = await requireAuth(req, pool, { requireAdmin: true });
+  const auth = await requireAuth(req, { requireAdmin: true });
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { domain_id, name } = await req.json();
   adminDebugLog('[departments] POST body:', { domain_id, name });
