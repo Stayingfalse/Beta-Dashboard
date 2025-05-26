@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import mariadb from "mariadb";
+import type { LinkRow, LinkIdRow } from "./types";
 
 const dbUrl = process.env.MARIADB_URL || "";
 let pool: mariadb.Pool | null = null;
@@ -119,7 +120,7 @@ export async function PUT(req: NextRequest) {
       "SELECT link_id FROM link_allocations WHERE user_id = ?",
       [user.id]
     );
-    const alreadyAllocated = new Set(allocatedRows.map((r: any) => Number(r.link_id)));
+    const alreadyAllocated = new Set(allocatedRows.map((r: LinkIdRow) => Number(r.link_id)));
     // Get user's own link id
     const [ownLink] = await conn.query("SELECT id FROM links WHERE uid = ?", [user.id]);
     const ownLinkId = ownLink ? Number(ownLink.id) : null;
@@ -127,27 +128,27 @@ export async function PUT(req: NextRequest) {
     const eligibleLinks = await conn.query(
       `SELECT id, url, times_allocated, times_purchased, error_count FROM links`
     );
-    const filtered = eligibleLinks.filter((l: any) =>
+    const filtered = (eligibleLinks as LinkRow[]).filter((l: LinkRow) =>
       Number(l.id) !== ownLinkId && !alreadyAllocated.has(Number(l.id))
     );
     // Sort by times_allocated, then times_purchased, then error_count
-    filtered.sort((a: any, b: any) =>
-      a.times_allocated - b.times_allocated ||
-      a.times_purchased - b.times_purchased ||
-      a.error_count - b.error_count
+    filtered.sort((a: LinkRow, b: LinkRow) =>
+      Number(a.times_allocated) - Number(b.times_allocated) ||
+      Number(a.times_purchased) - Number(b.times_purchased) ||
+      Number(a.error_count) - Number(b.error_count)
     );
     // Randomize among ties for fairness
-    function shuffle(arr: any[]) {
+    function shuffle(arr: LinkRow[]) {
       for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [arr[i], arr[j]] = [arr[j], arr[i]];
       }
     }
-    let toAllocate: any[] = [];
+    const toAllocate: LinkRow[] = [];
     let i = 0;
     while (toAllocate.length < numToAllocate && i < filtered.length) {
       // Find all with same priority as filtered[i]
-      const group = filtered.filter((l: Record<string, any>) =>
+      const group = filtered.filter((l: LinkRow) =>
         l.times_allocated === filtered[i].times_allocated &&
         l.times_purchased === filtered[i].times_purchased &&
         l.error_count === filtered[i].error_count
@@ -180,7 +181,9 @@ export async function PUT(req: NextRequest) {
       error_count: Number(l.error_count)
     }));
     return NextResponse.json({ allocated: result });
-  } catch (err) {
+  } catch {
+    // Optionally log error for debugging
+    // console.error('Failed to allocate links', err);
     return NextResponse.json({ error: "Failed to allocate links" }, { status: 500 });
   } finally {
     conn.release();
@@ -210,7 +213,7 @@ export async function GET_ALLOCATED(req: NextRequest) {
        ORDER BY a.allocated_at ASC`,
       [user.id]
     );
-    const result = rows.map((l: any) => ({
+    const result = (rows as LinkRow[]).map(l => ({
       ...l,
       id: Number(l.id),
       times_allocated: Number(l.times_allocated),
@@ -218,7 +221,7 @@ export async function GET_ALLOCATED(req: NextRequest) {
       error_count: Number(l.error_count)
     }));
     return NextResponse.json({ allocated: result });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch allocated links" }, { status: 500 });
   } finally {
     conn.release();

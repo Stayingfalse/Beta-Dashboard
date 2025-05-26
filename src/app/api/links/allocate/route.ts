@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import mariadb from "mariadb";
+import type { LinkRow } from "../types";
 
 const dbUrl = process.env.MARIADB_URL || "";
 let pool: mariadb.Pool | null = null;
@@ -56,16 +57,19 @@ export async function GET(req: NextRequest) {
        ORDER BY a.allocated_at ASC`,
       [user.id]
     );
-    const result = rows.map((l: any) => ({
+    const result = (rows as LinkRow[]).map((l) => ({
       ...l,
       id: Number(l.id),
       times_allocated: Number(l.times_allocated),
       times_purchased: Number(l.times_purchased),
-      error_count: Number(l.error_count)
+      error_count: Number(l.error_count),
     }));
     return NextResponse.json({ allocated: result });
-  } catch (err) {
-    return NextResponse.json({ error: "Failed to fetch allocated links" }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to fetch allocated links" },
+      { status: 500 }
+    );
   } finally {
     conn.release();
   }

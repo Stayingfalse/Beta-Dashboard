@@ -23,7 +23,13 @@ export default function DashboardPage() {
   const [departmentLoading, setDepartmentLoading] = useState(true);
   const [departmentError, setDepartmentError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [allocatedLinks, setAllocatedLinks] = useState<any[]>([]);
+  const [allocatedLinks, setAllocatedLinks] = useState<{
+    id: number;
+    url: string;
+    times_allocated: number;
+    times_purchased: number;
+    error_count: number;
+  }[]>([]);
   const [allocLoading, setAllocLoading] = useState(false);
   const [allocError, setAllocError] = useState<string | null>(null);
   const [allocSuccess, setAllocSuccess] = useState<string | null>(null);
